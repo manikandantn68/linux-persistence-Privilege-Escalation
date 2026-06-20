@@ -1,0 +1,1371 @@
+half adder = 2 input / basic unit
+
+full adder = 3 input
+sum (s) 
+carry out count
+
+why it matters
+adders are inside every cpu
+used in alu (arithmetic logic unit)
+every calculation your computer does uses adders at the hardware level
+
+Sum = current bit result
+Cin = carry from previous bit position
+Without both → multi-bit addition is impossible
+
+
+Types of Adder (Digital Logic)
+1. Half Adder(2 )
+addition of two binary bits
+5+8 = "1" carry 3 sum  
+
+input      output
+
+a | b  carry   sum
+0 |0            1
+1 | 0           1
+0 | 1           1
+ 1 | 1   1      0
+
+Adds 2 single bits
+Outputs: Sum, Carry
+No carry input
+
+2. Full Adder  (3)
+
+0+0 =0
+0 +  1 = 1
+1 + 0 =1 
+1+ 1 =carry "1" sum  "0"
+
+
+Adds 3 bits (A + B + Cin)
+Outputs: Sum, Carry
+Can be chained
+
+3. Ripple Carry Adder (RCA)
+
+simple explain:  multi adder's combined is rca
+
+Chain of Full Adders
+Simple but slow (carry propagates serially)
+
+4. Carry Look-Ahead Adder (CLA)
+
+Pre-computes carry signals
+Fast, used in real CPUs
+
+5. Carry Select Adder
+
+Computes two results (Cin=0 and Cin=1) in parallel, selects correct one
+Faster than RCA
+
+6. Carry Save Adder (CSA)
+
+Used in multipliers
+Handles 3+ numbers, defers carry resolution
+
+7. Kogge-Stone Adder (application large)
+
+Parallel prefix adder
+Very fast, used in high-performance processors
+
+8. Brent-Kung Adder
+
+Another parallel prefix adder
+Less wiring than Kogge-Stone, slightly slower
+
+
+
+Binary Input
+    ↓
+Half Adder / Full Adder   ← (your previous question)
+    ↓
+ALU
+    ↓
+Registers (store result)
+    ↓
+RAM / Cache
+    ↓
+Output
+
+
+WHAT is a Subtractor?
+ a digital circuit that performs binary subtraction
+
+Two types:
+Half SubtractorA, BDifference, Borrow
+Full SubtractorA, B, BinDifference, Bout
+
+WHY use Subtractor?
+CPU needs to subtract numbers — comparison, loops, counters, memory addressing
+
+
+i = i - 1        ← loop counter
+address - offset ← memory calc
+A > B check      ← comparison uses subtraction
+
+ALU (inside CPU)
+    ├── Adder
+    ├── Subtractor  ← here
+    ├── Multiplier
+    └── Logic gates
+
+Also used in:
+    ├── Comparators
+    ├── Counters (down counter)
+    └── Signal processing (DSP)
+
+
+4and
+
+what is d latch
+D latch (Data latch) is a basic digital memory circuit that stores one bit of data (0 or 1).
+D latches are commonly used in registers, temporary data storage, and sequential logic circuits.
+
+Inputs and Output
+D (Data input): The value to be stored.
+Enable (E) or Clock: Controls when the latch can accept new data.
+Q (Output): The stored value.
+
+
+How it works
+
+When Enable = 1 (active):
+
+The output Q follows D.
+If D changes, Q changes immediately.
+
+
+
+When Enable = 0 (inactive):
+
+The latch holds its previous value.
+Changes on D do not affect Q.
+
+
+
+                CPU
+  ┌──────────────────
+  │                           │
+  │  Registers                │
+  │  ┌─────┐              │
+  │  │D    │                │
+  │  │Latch│───► Q       │
+  │  └─────┘              │
+  │      ▲                    │
+  │      │                    │
+  │  Control Signal           │
+  │  (Enable)                 │
+  │                           │
+  │  ┌─────┐             │
+  │  │ ALU │               │
+  │  └─────┘              │
+  │                           │
+  └──────────────────
+
+
+
+Memory
+   │
+   ▼
+Data Bus
+   │
+   ▼
+┌─────────┐
+│ D Latch │
+└─────────┘
+   │ Q
+   ▼
+Register
+   │
+   ▼
+ ALU
+   │
+   ▼
+Result Register
+
+------------------------------------
+What is an Accumulator?
+
+An Accumulator (ACC) is a special register inside a CPU that temporarily stores the results of arithmetic and logic operations.
+
+
+Why is it used?
+Stores intermediate results.
+Reduces memory accesses.
+Makes calculations faster.
+
+
+example
+
+5 + 3
+
+Load 5 into Accumulator.
+Add 3 to Accumulator.
+Result (8) is stored in Accumulator.
+
+LOAD 5      ; ACC = 5
+ADD 3       ; ACC = 8
+SUB 2       ; ACC = 6
+
+
+----------------
+================================================================================
+                           MODERN CPU INTERNALS
+================================================================================
+
+CLOCK & CONTROL
+──────────────────────────────────────────────────────────────────────────────
+
+ Crystal Oscillator
+         │
+         ▼
+       Phase-Locked Loop
+         │
+         ▼
+    Clock Tree
+         │
+         ├────────► Program Counter D Flip-Flops
+         ├────────► Pipeline Register D Flip-Flops
+         ├────────► Register File D Flip-Flops
+         └────────► Control Finite State Machine.
+
+
+================================================================================
+                           CPU PIPELINE
+================================================================================
+
+      IF            ID            EX            MEM            WB
+      │             │             │             │             │
+      ▼             ▼             ▼             ▼             ▼
+
++------------+ +------------+ +------------+ +------------+ +------------+
+| INSTR      | | DECODE &   | | ALU CORE   | | MEMORY     | | WRITEBACK  |
+| FETCH      | | REG FILE   | | EXECUTION  | | SYSTEM     | |            |
++------------+ +------------+ +------------+ +------------+ +------------+
+
+
+================================================================================
+                       STAGE 1 : INSTRUCTION FETCH
+================================================================================
+
+ +--------------------------+
+ | Program Counter (PC)     |
+ | D Flip-Flop Array        |
+ +--------------------------+
+              │
+              ▼
+ +--------------------------+
+ | Instruction Cache        |
+ | SRAM Cells               |
+ | Tag SRAM                 |
+ | XNOR Comparators         |
+ +--------------------------+
+              │
+              ▼
+ +--------------------------+
+ | PC + 4 Incrementer       |
+ | Full Adder Chain         |
+ +--------------------------+
+              │
+              ▼
+ +--------------------------+
+ | IF/ID Pipeline Register  |
+ | D Flip-Flop Bank         |
+ +--------------------------+
+
+
+================================================================================
+                      STAGE 2 : INSTRUCTION DECODE
+================================================================================
+
+ +--------------------------+
+ | Opcode Decoder           |
+ | AND Gates                |
+ | OR Gates                 |
+ | NOT Gates                |
+ | PLA Logic                |
+ | ROM Decoder              |
+ +--------------------------+
+              │
+              ▼
+
+ +-----------------------------------------------------------+
+ |                    REGISTER FILE                          |
+ +-----------------------------------------------------------+
+ | Storage Cells      : D Flip-Flop Arrays                   |
+ | Read Logic         : Multiplexer Trees                    |
+ | Write Logic        : Demultiplexer Network                |
+ | Bus Interface      : Tri-State Buffers                    |
+ +-----------------------------------------------------------+
+              │
+              ▼
+ +--------------------------+
+ | ID/EX Pipeline Register  |
+ | D Flip-Flop Bank         |
+ +--------------------------+
+
+
+================================================================================
+                         STAGE 3 : EXECUTE
+================================================================================
+
+ Operand A ------------------------+
+                                   |
+                                   ▼
+                            +-------------+
+ Operand B ---------------->|    ALU      |
+                            +-------------+
+
+      ALU INTERNALS
+      ─────────────
+
+      ADDER
+      └── Full Adder Chains
+          Ripple Carry
+          Carry Lookahead
+
+      LOGIC UNIT
+      └── AND Gates
+          OR Gates
+          XOR Gates
+          NOT Gates
+
+      MULTIPLIER
+      └── AND Gate Arrays
+          Partial Product Logic
+
+      BARREL SHIFTER
+      └── Multiplexer Network
+
+      COMPARATOR
+      └── XOR Comparators
+          NOR Reduction Trees
+
+              │
+              ▼
+
+ +--------------------------+
+ | Flag Register            |
+ | D Flip-Flops             |
+ | Z = Zero Flag            |
+ | C = Carry Flag           |
+ | N = Negative Flag        |
+ | V = Overflow Flag        |
+ +--------------------------+
+
+              │
+              ▼
+
+ +--------------------------+
+ | EX/MEM Pipeline Register |
+ | D Flip-Flop Bank         |
+ +--------------------------+
+
+
+================================================================================
+                         STAGE 4 : MEMORY
+================================================================================
+
+ +------------------------------------------------+
+ | TLB (Translation Lookaside Buffer)             |
+ +------------------------------------------------+
+ | CAM Cells                                      |
+ | XNOR Match Comparators                         |
+ | Priority Encoder                              |
+ +------------------------------------------------+
+
+                        │
+                        ▼
+
+ +------------------------------------------------+
+ | DATA CACHE                                     |
+ +------------------------------------------------+
+ | SRAM Arrays                                    |
+ | Tag SRAM                                       |
+ | XNOR Tag Compare Logic                         |
+ | FSM Cache Controller                           |
+ | LRU Counters                                   |
+ +------------------------------------------------+
+
+                        │
+                        ▼
+
+ +--------------------------+
+ | MEM/WB Pipeline Register |
+ | D Flip-Flop Bank         |
+ +--------------------------+
+
+
+================================================================================
+                         STAGE 5 : WRITE BACK
+================================================================================
+
+ ALU Result ----------------------+
+                                  |
+ Memory Result -------------------+----► Writeback MUX
+                                  |
+ PC+4 ----------------------------+
+                                           │
+                                           ▼
+                                 Register File Write Port
+
+
+================================================================================
+                       HAZARD DETECTION UNIT
+================================================================================
+
+ +------------------------------------------------+
+ | Dependency Detection                           |
+ | XOR Comparators                                |
+ | NOR Trees                                      |
+ +------------------------------------------------+
+
+ +------------------------------------------------+
+ | Forwarding Unit                                |
+ | 4:1 Multiplexers                               |
+ +------------------------------------------------+
+
+ +------------------------------------------------+
+ | Stall Controller                               |
+ | AND / OR Logic                                 |
+ +------------------------------------------------+
+
+ +------------------------------------------------+
+ | Branch Flush Controller                        |
+ | FSM + Gate Logic                               |
+ +------------------------------------------------+
+
+
+================================================================================
+                        DATA FLOW SUMMARY
+================================================================================
+
+ PC
+ │
+ ▼
+ Instruction Cache
+ │
+ ▼
+ Decoder
+ │
+ ▼
+ Register File
+ │
+ ▼
+ ALU
+ │
+ ▼
+ Data Cache
+ │
+ ▼
+ Write Back
+ │
+ ▼
+ Register File
+
+
+================================================================================
+                     GATE LEVEL BUILDING BLOCKS
+================================================================================
+
+D Flip-Flop      -> Registers, Pipeline Registers, Flags, PC
+SRAM Cell        -> Cache Memory
+CAM Cell         -> TLB
+Full Adder       -> ALU Addition, PC Increment
+AND Gate         -> Decoder, Multiplier
+OR Gate          -> Decoder, Control Logic
+NOT Gate         -> Decoder, Inversion
+XOR Gate         -> Comparator, Equality Check
+XNOR Gate        -> Cache Tag Compare
+MUX              -> Operand Selection, Shifters
+DEMUX            -> Register Writes
+Tri-State Buffer -> Bus Interface
+FSM              -> Cache Controller, Control Unit
+
+
+
+
+================================================================================
+
+what is Crystal Oscillator
+
+A Crystal Oscillator is an electronic component that generates a very accurate clock signal (square wave pulses) for digital circuits.
+
+
+Think of it as the heartbeat of the CPU.
+
+
+Crystal Oscillator
+       │
+       ▼
+Clock Pulses
+       │
+       ▼
+CPU
+
+
+Why is it needed?
+The CPU contains millions or billions of transistors.
+All operations must happen in synchronization.
+The crystal oscillator provides timing pulses:
+
+tells the CPU when to:
+
+Fetch instruction
+Decode instruction
+Execute instruction
+Access memory
+Write result
+
+Inside the Crystal
+A quartz crystal has a property called Piezoelectric Effect.
+
+Voltage Applied
+       │
+       ▼
+Quartz Crystal Vibrates
+       │
+       ▼
+Produces Stable Frequency
+
+32.768 kHz
+8 MHz
+16 MHz
+25 MHz
+100 MHz
+
+CPU Clock Generation
+Quartz Crystal
+    25 MHz
+       │
+       ▼
++-------------+
+|     PLL     |
++-------------+
+       │
+       ▼
+3.5 GHz CPU Clock
+
+
+The PLL (Phase Locked Loop) multiplies it to the CPU speed.
+Crystal = 100 MHz
+
+PLL Multiplier = 40
+
+CPU Clock = 4 GHz
+
+
++----------------+
+| Quartz Crystal |
++----------------+
+        │
+        ▼
++----------------+
+|      PLL       |
++----------------+
+        │
+        ▼
++----------------+
+|  Clock Tree    |
++----------------+
+        │
+   ┌────┼────┐
+   ▼    ▼    ▼
+  PC   ALU  Registers
+
+
+
+----------------------------
+
+ What is an SR Flip-Flop?
+
+SR Flip-Flop stands for Set-Reset Flip-Flop.
+
+It is a basic digital memory circuit that can store 1 bit of information (either 0 or 1).
+
+S (Set) → Makes the output 1
+R (Reset) → Makes the output 0
+
+
+Why is it used?
+
+An SR Flip-Flop is used to:
+
+Store a single bit of data
+Remember a state
+Build registers and counters
+Create memory elements in digital systems
+Form the basis of more advanced flip-flops
+
+
+
+Inputs and Output
+S = Set Input
+R = Reset Input
+
+Q = Output
+
++-------------------------------------------------------+
+|                        CPU                            |
+|                                                       |
+|   +------------+        +------------+                |
+|   |  Control   |------->| SR Flip-   |                |
+|   |    Unit    |        |   Flop     |                |
+|   +------------+        +-----+------+                |
+|                               | Q                     |
+|                               v                       |
+|                        +-------------+                |
+|                        | Status Flag |                |
+|                        | 1 = Busy    |                |
+|                        | 0 = Idle    |                |
+|                        +-------------+                |
+|                                                       |
+|   S (Set)   -> CPU Busy                               |
+|   R (Reset) -> CPU Idle                               |
+|                                                       |
++-------------------------------------------------------+
+----------------------------------------------------------------------------------------------
+Why are Flags Used?
+
+A flag is a small memory bit that tells the CPU about a condition or status.
+Think of a flag as a yes/no indicator:
+1 = True / Active / Yes
+0 = False / Inactive / No
+
+
+--------------------------------
+Busy Flag
+Busy Flag = 1
+CPU is currently working.
+
+
+CPU executing instruction
+      ↓
+Busy Flag = 1
+
+When the task finishes:
+Busy Flag = 0 ->CPU is free.
+
+--------------------------------
+Ready Flag
+
+Ready Flag = 1 -> Data or device is ready.
+
+Keyboard sends data
+      ↓
+Ready Flag = 1
+      ↓
+CPU reads data
+
+Without checking the flag, the CPU might try to read data that is not yet available.
+
+-----------------------------------
+
+Interrupt Flag
+
+
+Interrupt Flag = 1 -> An interrupt request has occurred.
+
+Mouse Click
+     ↓
+Interrupt Flag = 1
+     ↓
+CPU pauses current work
+     ↓
+Handles mouse event
+
+--------------------------------------
+----Why Store Flags in a Flip-Flop?
+
+Device Ready
+     ↓
+Flag = 1
+
+An SR Flip-Flop can store exactly one bit: ->0 or 1
+
+CPU
+|
++-- Status Register
+     |
+     +-- Busy Flag      = 1 (CPU working)
+     +-- Ready Flag     = 1 (Data available)
+     +-- Interrupt Flag = 1 (Event occurred)
+
+The CPU continuously checks these flags:
+if Busy Flag == 1
+    continue processing
+
+if Ready Flag == 1
+    read data
+
+if Interrupt Flag == 1
+    handle interrupt
+
+one  line:
+Flags are 1-bit status indicators that help the CPU know what is happening inside the system, and flip-flops are used because they can store that 1-bit information (0 or 1).
+
+--------------------------------------
+
+What is a D Flip-Flop?
+
+D Flip-Flop stands for Data Flip-Flop (or Delay Flip-Flop).
+
+It is a digital memory circuit that stores 1 bit of data and updates its output only when a clock signal arrives.
+
+Why is it Used?
+
+A D Flip-Flop is used to:
+
+Store 1 bit of data
+Build CPU registers
+Build counters
+Synchronize signals
+Create memory elements in processors
+
+Modern CPUs use D Flip-Flops extensively.
+
+
+Inputs and Outputs
+
+D     = Data Input
+CLK   = Clock Input
+
+Q     = Output
+Q̅     = Inverted Output
+
+
+Clock Edge Occurs
+
+Q = D
+
+
+| Clock Edge | D | Q(next)   |
+| ---------- | - | --------- |
+| ↑          | 0 | 0         |
+| ↑          | 1 | 1         |
+| No Edge    | X | No Change |
+
+
+D = 1
+
+Clock Edge
+     ↓
+
+Q = 1
+
+
+The value 1 is stored.
+
+
+D = 0
+
+Clock Edge
+     ↓
+
+Q = 0
+
+
+The value 0 is stored.
+
+
+
+                    CPU
+
++--------------------------------------------------+
+|                                                  |
+|   Data Bus                                       |
+|      |                                           |
+|      v                                           |
+|   +--------+                                     |
+|   |   D    |                                     |
+|   | Flip-  |-------> Q (Stored Bit)              |
+|   |  Flop  |                                     |
+|   +--------+                                     |
+|       ^                                          |
+|       |                                          |
+|     Clock                                        |
+|                                                  |
++--------------------------------------------------+
+
+
+
+| Feature         | SR Flip-Flop  | D Flip-Flop |
+| --------------- | ------------- | ----------- |
+| Inputs          | S, R          | D           |
+| Clock           | Usually No    | Yes         |
+| Invalid State   | Yes           | No          |
+| CPU Usage       | Rare          | Very Common |
+| Register Design | Not Preferred | Preferred   |
+
+
+-------------------
+A Master-Slave D Latch Register uses two D Latches per bit.
+Master-Slave (MS) D Latch Register
+
+        Clock
+          |
+          v
+
+Data --> [Master Latch] ->Master captures data
+               |
+               v
+        [Slave Latch] ->Slave updates only on clock transition
+               |
+               v
+             Output
+
+
+
+Why Use Master-Slave?
+Clock = 1
+
+Input changes
+Output changes immediately
+
+
+-------------------
+
+Program Counter (PC)
+
+alternative way ,memory pointer,  status registers ,instruction buffer
+
+The Program Counter (PC) is a special CPU register.
+
+CPU
+ |
+ +-- Program Counter (PC)
+         |
+         +-- Current Instruction Address
+
+
+Address    Instruction
+
+1000       LOAD   ->CPU fetches instruction:
+1001       ADD     ->
+PC = PC + 1
+
+PC = 1001
+
+1002       SUB
+1003       STORE
+
+
+CPU
+│
+├── Program Counter (PC)
+│     │
+│     └── Holds Address of Next Instruction
+│
+├── Address Bus
+│     │
+│     └── Sends PC Address to ( Instruction Memory "if ram memory is given program runtime or if rom  program boot via given initial load  that instruction memory can fetch cpu  ")
+│
+├── Instruction Memory
+│     │
+│     └── Returns Instruction
+│
+├── Instruction Register (IR) (inside cpu internal component)
+│     │
+│     └── Stores Fetched Instruction
+│
+├── Instruction Decoder (inside cpu internal component)
+│     │
+│     └── Decodes Instruction
+│
+├── Control Unit (CU)
+│     │
+│     └── Generates Control Signals
+│
+├── Registers / ALU / Memory Interface
+│     │
+│     └── Executes Instruction
+│
+├── Result Write Back
+│     │
+│     └── Stores Result in Register or Memory
+│
+└── Program Counter Update
+      │
+      ├── PC = PC + Instruction Size
+      │
+      └── Or Branch/Jump Target Address
+            │
+            └── Fetch Next Instruction
+
+-------------------
+What is Instruction Cache (I-Cache)
+
+Instruction Cache (I-Cache) is a small, very fast memory inside the CPU that stores frequently used instructions.
+
+Instead of fetching instructions from slow RAM every time, the CPU first checks the Instruction Cache.
+
+CPU Instruction Fetch Path
+
+          +----------------+
+          | Program Counter|
+          +-------+--------+
+                  |
+                  v
+          +----------------+
+          | Instruction     |
+          | Cache (I-Cache) |
+          +-------+--------+
+                  |
+         Cache Hit|    Cache Miss
+                  |          |
+                  v          v
+             Instruction   RAM
+                  |
+                  v
+          +----------------+
+          | Instruction    |
+          | Register (IR)  |
+          +----------------+
+
+
+1000 : LOAD
+1001 : ADD
+1002 : SUB
+1003 : STORE
+
+
+CPU -> RAM
+LOAD instruction fetched
+
+Instruction Cache stores it
+
+later ->CPU needs LOAD again
+
+
+
+Cache Hit
+Instruction found in I-Cache
+Fast access
+
+This is called a Cache Hit.
+
+
+Cache Miss
+Instruction not found in I-Cache
+
+Fetch from RAM
+Store in I-Cache
+Continue execution
+
+This is called a Cache Miss.
+
+-------------------------------------
+
+SRAM = Static Random Access Memory
+
+SRAM cell is the basic memory block used inside CPU caches.
+
+A typical SRAM cell stores 1 bit.
+        +-----+
+Data -->| SRAM|--> Data
+        | Cell|
+        +-----+
+
+Stores:
+0 or 1
+
+CPU Cache
+ |
+ +-- SRAM Cell
+ +-- SRAM Cell
+ +-- SRAM Cell
+ +-- SRAM Cell
+ …
+
+
+why we call sram cell because memory cell made up of transistor ,capacitor made it that we call it cell and they unit storage
+
+Very Fast
+No Refresh Needed
+Low Latency
+
+Tag SRAM
+A cache stores not only data but also the memory address information.
+That address information is stored in Tag SRAM.
+
+Why?
+Suppose:
+RAM Address = 0x1000
+Data is copied into cache.
+
+Later CPU asks:
+Do I already have address 0x1000?
+
++---------------------+
+|     Tag SRAM        |
++---------------------+
+| 0x1000              |
+| 0x2000              |
+| 0x3000              |
++---------------------+
+
++---------------------+
+|     Data SRAM       |
++---------------------+
+| Instruction A       |
+| Instruction B       |
+| Instruction C       |
++---------------------+
+
+
+CPU requests address 0x1000
+          |
+          v
+     Tag SRAM
+          |
+     Match Found?
+      /      \
+    Yes      No
+     |         |
+ Cache Hit   Cache Miss
+
+
+--------------------------------
+IF/ID Pipeline Register
+
+Instructions are split into stages.
+IF -> ID -> EX -> MEM -> WB
+
+IF  = Instruction Fetch
+ID  = Instruction Decode
+EX  = Execute
+MEM = Memory Access
+WB  = Write Back
+
+Instruction
+      |
+      v
++---------+
+|   IF    |
++---------+
+      |
+      v
++------------------+
+| IF/ID Register   |
++------------------+
+      |
+      v
++---------+
+|   ID    |
++---------+
+
+What Does IF/ID Register Store?
+After fetch:
+Instruction = ADD R1,R2
+PC = 1000
+
+The IF stage stores them into the IF/ID register.
+IF/ID Register
+
+Instruction = ADD R1,R2
+PC = 1000
+
+IF Stage
+   |
+   v
++------------------+
+| IF/ID Register   |
++------------------+
+| Instruction Bits |
+| Program Counter  |
++------------------+
+   |
+   v
+ID Stage
+
+
+Why Use It?
+Without a pipeline register:
+Fetch stage changes data
+Decode stage may read wrong data
+
+With IF/ID register:
+Fetch stores instruction
+Decode gets stable instruction
+
+
+                    CPU
+
+        +----------------------+
+        | Instruction Cache    |
+        | (Data SRAM)          |
+        +----------+-----------+
+                   |
+                   v
+        +----------------------+
+        | Tag SRAM             |
+        | Cache Hit Check      |
+        +----------+-----------+
+                   |
+                   v
+        +----------------------+
+        | IF Stage             |
+        +----------+-----------+
+                   |
+                   v
+        +----------------------+
+        | IF/ID Pipeline Reg   |
+        +----------+-----------+
+                   |
+                   v
+        +----------------------+
+        | ID Stage             |
+        +----------------------+
+
+
+-------------------------------------
+
+Multiplexer Trees (MUX Trees)
+
+A Multiplexer (MUX) selects one input from many inputs.
+
+      Input0 ----+
+                 |
+      Input1 ----+----> MUX ----> Output
+                 |
+      Input2 ----+
+                 |
+      Input3 ----+
+
+
+Why in CPU?
+The CPU constantly chooses between multiple sources.
+ALU Input A =
+   Register R1
+   OR
+   Forwarded Data
+   OR
+   Immediate Value
+
+MUX decides which source goes into the ALU.
+
+MUX Tree
+8 Inputs
+   |
+   +--> MUX
+   |
+   +--> MUX
+         |
+         +--> MUX
+               |
+             Output
+
+This is called a Multiplexer Tree.
+
+
+-------------------------------------
+
+Demultiplexer Network (DEMUX)
+DEMUX is opposite of MUX.
+
+              Input
+                |
+             DEMUX
+          /    |    \
+         /     |     \
+       Out0  Out1  Out2
+
+CPU Example
+Write-back stage:
+ALU Result
+      |
+      v
+    DEMUX
+      |
+      +--> R0
+      +--> R1
+      +--> R2
+      +--> R3
+Only one register receives the data.
+
+-------------------------------------
+Tri-State Buffers
+Normal output:
+
+0
+or
+1
+
+Tri-state output:
+0
+1
+Z (High Impedance)
+
+Why?
+Many devices share a bus.
+Register A ----+
+               |
+Register B ----+---- CPU Bus
+               |
+Register C ----+
+
+Only one device may drive the bus.
+
+
+Enabled   -> Output Active
+Disabled  -> Z State
+
+Tri-state buffers prevent bus conflicts.
+
+------------------------------------
+ID/EX Pipeline Register
+
+IF -> ID -> EX -> MEM -> WB
+
+ID Stage
+   |
+   v
++---------+
+| ID/EX   |
++---------+
+   |
+   v
+EX Stage
+
+Instruction
+Register Values
+Immediate Values
+Control Signals
+
+
+EX/MEM Pipeline Register
+Between Execute and Memory.
+
+EX Stage
+   |
+   v
++---------+
+| EX/MEM  |
++---------+
+   |
+   v
+MEM Stage
+ALU Result
+Branch Result
+Control Signals
+Destination Register
+
+------------------------------------
+TLB (Translation Lookaside Buffer)
+
+Modern CPUs use virtual memory.
+
+Program sees:
+Virtual Address
+0x12345678
+
+RAM needs:
+Physical Address
+0x00A5678
+
+TLB stores recent translations.
+
+Virtual -> Physical
+
+------------------------------------
+cam Content Addressable Memory.
+
+Normal memory: Address -> Data |  CAM: Data -> Address 
+
+
+------------------------------------
+XNOR Match Comparators
+
+TLB and Cache must compare tags.
+
+
+------------------------------
+XNOR Tag Compare Logic
+
+Requested Tag
+      vs
+Stored Tag
+
+-----------------------
+FSM Cache Controller
+
+
+Finite State Machine.
+
+Controls cache behavior.
+States:
+IDLE
+LOOKUP
+HIT
+MISS
+REFILL
+WRITEBACK
+
+CPU Request
+     |
+     v
+ LOOKUP
+     |
+ Hit?
+ /   \
+Yes   No
+ |     |
+Hit  MISS
+       |
+    Refill
+------------------------------------
+LRU Counters
+
+LRU = Least Recently Used. 
+Cache full:
+Block A
+Block B
+Block C
+Block D
+Need space.
+
+
+Which block to remove ?
+
+LRU tracks usage.
+Most Recent
+Least Recent
+
+Remove:
+Least Recently Used Block
+
+------------------------------------
+MEM/WB Pipeline Register\
+
+MEM
+ |
+ v
++--------+
+|MEM/WB  |
++--------+
+ |
+ v
+WB
+
+
+Stores:
+Loaded Data
+ALU Result
+Destination Register
+Control Signals
+
+
+--------------------
+D Flip-Flop Bank
+
+a bank is many D Flip-Flops together.
+
+1 Bit
+ |
+[D FF]
+
+
+
+
