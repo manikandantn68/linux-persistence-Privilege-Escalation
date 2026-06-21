@@ -1,0 +1,150 @@
+How to Construct an LL(1) Parsing Table
+Step 1: Grammar
+E  → T E'
+
+E' → + T E'
+E' → ε
+
+T  → F T'
+
+T' → * F T'
+T' → ε
+
+F  → ( E )
+F  → id
+
+
+Step 2: Find FIRST Sets
+FIRST(E)  = { id, ( }
+
+FIRST(E') = { +, ε }
+
+FIRST(T)  = { id, ( }
+
+FIRST(T') = { *, ε }
+
+FIRST(F)  = { id, ( }
+
+
+Step 3: Find FOLLOW Sets
+FOLLOW(E)  = { ), $ }
+
+FOLLOW(E') = { ), $ }
+
+FOLLOW(T)  = { +, ), $ }
+
+FOLLOW(T') = { +, ), $ }
+
+FOLLOW(F)  = { *, +, ), $ }
+
+Step 4: LL(1) Table Rules
+
+Rule 1
+
+If
+
+A → α
+
+Then place:
+
+A → α
+
+in all cells belonging to:
+
+FIRST(α)
+Rule 2
+
+If
+
+A → ε
+
+Then place:
+
+A → ε
+
+in all cells belonging to:
+
+FOLLOW(A)
+
+
+Step 5: Fill Table
+E → T E'
+FIRST(TE') = { id, ( }
+
+Put:
+
+M[E,id] = E→TE'
+
+M[E,( ] = E→TE'
+E' → + T E'
+FIRST(+TE') = { + }
+
+Put:
+
+M[E',+] = E'→+TE'
+E' → ε
+
+Use FOLLOW(E'):
+
+FOLLOW(E') = { ), $ }
+
+Put:
+
+M[E',)] = E'→ε
+
+M[E',$] = E'→ε
+T → F T'
+FIRST(FT') = { id,( }
+
+Put:
+
+M[T,id] = T→FT'
+
+M[T,( ] = T→FT'
+T' → * F T'
+FIRST(*FT') = { * }
+
+Put:
+
+M[T',*] = T'→*FT'
+T' → ε
+
+FOLLOW(T'):
+
+{ + , ) , $ }
+
+Put:
+
+M[T',+] = T'→ε
+
+M[T',)] = T'→ε
+
+M[T',$] = T'→ε
+F → (E)
+FIRST((E)) = { ( }
+
+Put:
+
+M[F,(] = F→(E)
+F → id
+FIRST(id) = { id }
+
+Put:
+
+M[F,id] = F→id
+
+Final Parsing Table
+---------------------------------------------------------
+        id         +         *         (         )      $
+---------------------------------------------------------
+E     E→TE'                          E→TE'
+---------------------------------------------------------
+E'              E'→+TE'                     E'→ε   E'→ε
+---------------------------------------------------------
+T     T→FT'                          T→FT'
+---------------------------------------------------------
+T'              T'→ε    T'→*FT'            T'→ε   T'→ε
+---------------------------------------------------------
+F     F→id                           F→(E)
+---------------------------------------------------------
+
