@@ -1,0 +1,1051 @@
+DFA vs NFA in Compiler Design (Lexical Analysis) with compilation process flow,
+
+Source Code
+     │
+     ▼
+Lexical Analysis (Scanner)
+     │
+     ├── Regular Expression
+     │         │
+     │         ▼
+     │        NFA
+     │         │
+     │         ▼
+     │        DFA
+     │
+     ▼
+Token Stream
+     │
+     ▼
+Syntax Analysis (Parser)
+     │
+     ▼
+Parse Tree / AST
+     │
+     ▼
+Semantic Analysis
+     │
+     ▼
+Intermediate Code Generation
+     │
+     ▼
+Code Optimization
+     │
+     ▼
+Target Code Generation
+     │
+     ▼
+Machine Code / Executable
+
+
+Why NFA First?
+
+Regular Expression → easy to convert into NFA
+NFA → converted into DFA
+DFA → used in actual scanner because it is faster
+
+Regular Expression
+        │
+        ▼
+       NFA
+        │
+        ▼
+       DFA
+        │
+        ▼
+   Token Recognition
+
+
+Identifier Regex
+
+[a-zA-Z][a-zA-Z0-9]*
+
+        │
+        ▼
+       NFA
+        │
+        ▼
+       DFA
+
+
+
+NFA Processing
+abc123
+
+
+nfa:
+      a-z
+  q0 -----> q1
+
+      a-z,0-9
+  q1 -----> q1
+
+At one state NFA can:
+
+State q0
+   ├── Path 1
+   ├── Path 2
+   └── Path 3
+
+
+DFA Processing
+Same regex after conversion:
+
+        a-z
+ q0 ----------> q1
+
+       a-z,0-9
+ q1 ----------> q1
+
+
+Only one path.
+
+Current State
+      │
+      ▼
+      q1
+
+
+Internal Compilation View
+Regex
+  │
+  ▼
+Thompson Construction
+  │
+  ▼
+NFA
+  │
+  ▼
+Subset Construction
+  │
+  ▼
+DFA
+  │
+  ▼
+Minimization
+  │
+  ▼
+Optimized DFA
+  │
+  ▼
+Lexer Generated
+
+
+Regex
+  ↓
+NFA   (Easy to Build)
+  ↓
+DFA   (Fast to Run)
+  ↓
+Lexer
+
+=================================
+gammer 
+
+Components of Grammar
+1. Non-Terminals
+Variables that can be expanded. - E, T, F
+2. Terminals
+Actual symbols/tokens. - +, *, id, (, )
+3. Production Rules
+Rules for replacement. 
+E → E + T
+E → T
+
+4. Start Symbol 
+Where parsing begins. -> E
+====================================================
+1. ARITHMETIC EXPRESSIONS
+====================================================
+
+E      = Expression
+Example: a + b * c
+
+T      = Term
+Example: b * c
+
+F      = Factor
+Example: a, b, c, 10, (a+b)
+
+id     = Identifier
+Example: count, total, x, y
+
+num    = Number
+Example: 10, 25, 100
+
+
+====================================================
+2. ASSIGNMENT STATEMENTS
+====================================================
+
+Stmt   = Statement
+Example: x = 10;
+
+Expr   = Expression
+Example: a + b
+
+Term   = Term
+Example: a * b
+
+Factor = Factor
+Example: a, 10
+
+id     = Identifier
+Example: salary
+
+
+====================================================
+3. IF STATEMENT
+====================================================
+
+Stmt   = Statement
+Example:
+if(x > y)
+    max = x;
+
+Expr   = Expression
+Example:
+x > y
+
+
+====================================================
+4. WHILE LOOP
+====================================================
+
+Stmt   = Statement
+Example:
+while(i < 10)
+    i++;
+
+Expr   = Expression
+Example:
+i < 10
+
+
+====================================================
+5. FOR LOOP
+====================================================
+
+Stmt   = Statement
+Example:
+for(i=0; i<10; i++)
+
+
+Expr   = Expression
+Examples:
+i=0
+i<10
+i++
+
+
+====================================================
+6. BLOCK STATEMENT
+====================================================
+
+Block = Block of Statements
+
+Example:
+{
+    x = 10;
+    y = 20;
+}
+
+StmtList = Statement List
+
+Example:
+x = 10;
+y = 20;
+z = 30;
+
+Stmt = Statement
+
+Example:
+x = 10;
+
+ε = Epsilon (Empty String)
+
+Example:
+Nothing
+Empty Production
+
+
+====================================================
+7. FUNCTION DECLARATION
+====================================================
+
+Function = Function Definition
+
+Example:
+int add(int a,int b)
+{
+    return a+b;
+}
+
+Type = Data Type
+
+Examples:
+int
+float
+char
+
+Params = Parameters
+
+Example:
+(int a,int b)
+
+ParamList = Parameter List
+
+Example:
+int a,int b
+
+Param = Single Parameter
+
+Example:
+int a
+
+
+====================================================
+8. FUNCTION CALL
+====================================================
+
+Call = Function Call
+
+Example:
+add(10,20);
+
+Args = Arguments
+
+Example:
+10,20
+
+ArgList = Argument List
+
+Example:
+10,20,30
+
+Expr = Expression
+
+Example:
+a+b
+
+
+====================================================
+9. VARIABLE DECLARATION
+====================================================
+
+Decl = Declaration
+
+Example:
+int age;
+
+Type = Data Type
+
+Example:
+int
+
+id = Identifier
+
+Example:
+age
+
+Expr = Expression
+
+Example:
+10+20
+
+
+====================================================
+10. RELATIONAL EXPRESSIONS
+====================================================
+
+RelExpr = Relational Expression
+
+Examples:
+a > b
+a < b
+a == b
+a != b
+a >= b
+
+
+====================================================
+11. BOOLEAN EXPRESSIONS
+====================================================
+
+BoolExpr = Boolean Expression
+
+Example:
+(a>b) && (c>d)
+
+BoolTerm = Boolean Term
+
+Example:
+a>b
+
+BoolFactor = Boolean Factor
+
+Example:
+true
+false
+a>b
+
+RelExpr = Relational Expression
+
+Example:
+x==y
+
+
+====================================================
+12. ARRAY DECLARATION
+====================================================
+
+ArrayDecl = Array Declaration
+
+Example:
+int marks[100];
+
+
+Type = Data Type
+
+Example:
+int
+
+id = Identifier
+
+Example:
+marks
+
+num = Number
+
+Example:
+100
+
+
+====================================================
+13. ARRAY ACCESS
+====================================================
+
+ArrayAccess = Array Access
+
+Example:
+marks[5]
+
+id = Identifier
+
+Example:
+marks
+
+Expr = Expression
+
+Example:
+i+1
+
+
+====================================================
+14. RETURN STATEMENT
+====================================================
+
+Stmt = Statement
+
+Example:
+return x;
+
+Expr = Expression
+
+Example:
+x+y
+
+
+====================================================
+15. DO-WHILE LOOP
+====================================================
+
+Stmt = Statement
+
+Example:
+
+do
+{
+   i++;
+}
+while(i<10);
+
+Expr = Expression
+
+Example:
+i<10
+
+
+====================================================
+16. SWITCH STATEMENT
+====================================================
+
+Stmt = Statement
+
+Example:
+switch(choice)
+{
+   case 1:
+      break;
+}
+
+CaseList = List of Cases
+
+Example:
+case 1:
+case 2:
+case 3:
+
+Case = Single Case
+
+Example:
+case 1:
+
+StmtList = Statement List
+
+Example:
+x=10;
+y=20;
+
+Expr = Expression
+
+Example:
+choice
+
+
+====================================================
+17. SIMPLE IDENTIFIER
+====================================================
+
+id = Identifier
+
+Examples:
+x
+count
+salary
+studentName
+
+letter = Alphabet Character
+
+Examples:
+a,b,c,d
+A,B,C,D
+
+
+====================================================
+18. INTEGER NUMBER
+====================================================
+
+num = Number
+
+Examples:
+10
+100
+2025
+
+digit = Single Digit
+
+Examples:
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+
+====================================================
+19. COMPLETE PROGRAM
+====================================================
+
+Program = Complete Program
+
+Example:
+
+int main()
+{
+   int a=10;
+   int b=20;
+   return a+b;
+}
+
+Declarations = Variable Declarations
+
+Example:
+int a;
+float salary;
+
+Decl = Declaration
+
+Example:
+int age;
+
+Functions = Function Definitions
+
+Example:
+main()
+add()
+
+Function = Function Definition
+
+Example:
+int add()
+{
+   return 10;
+}
+
+
+====================================================
+COMMON COMPILER DESIGN SYMBOLS
+====================================================
+
+CFG = Context-Free Grammar
+Example:
+E → E + T
+
+RE = Regular Expression
+Example:
+[a-zA-Z][a-zA-Z0-9]*
+
+NFA = Non-deterministic Finite Automaton
+Example:
+One input can go to multiple states
+
+DFA = Deterministic Finite Automaton
+Example:
+One input goes to exactly one state
+
+PDA = Pushdown Automaton
+Example:
+Used for CFG parsing
+
+AST = Abstract Syntax Tree
+
+Example:
+
+      +
+     / \
+    a   *
+       / \
+      b   c
+
+Parse Tree = Syntax Tree
+
+Example:
+
+        E
+      / | \
+     E  +  T
+
+
+====================================================
+GRAMMAR NOTATION SYMBOLS
+====================================================
+
+→ = Produces
+
+Example:
+E → E + T
+
+Meaning:
+E can be replaced by E + T
+
+
+| = OR
+
+Example:
+F → id | num
+
+Meaning:
+F can be id OR num
+
+
+ε = Empty String
+
+Example:
+StmtList → ε
+
+Meaning:
+No statement present
+
+
+( ) = Grouping
+
+Example:
+(a+b)
+
+
+{ } = Block
+
+Example:
+{
+   x=10;
+}
+
+
+[ ] = Array Index
+
+Example:
+arr[5]
+
+
+; = Statement Terminator
+
+Example:
+x=10;
+
+
+====================================================
+MOST IMPORTANT EXAM SYMBOLS
+====================================================
+
+E    = Expression      Example: a+b
+T    = Term            Example: a*b
+F    = Factor          Example: a
+Stmt = Statement       Example: x=10;
+Expr = Expression      Example: a+b*c
+Decl = Declaration     Example: int x;
+Type = Data Type       Example: int
+id   = Identifier      Example: count
+num  = Number          Example: 100
+ε    = Empty String    Example: Nothing
+
+==============================================
+
+
+====================================================
+1. ARITHMETIC EXPRESSIONS
+====================================================
+
+E      = Expression
+T      = Term
+F      = Factor
+id     = Identifier
+num    = Number
+
+
+====================================================
+2. ASSIGNMENT STATEMENTS
+====================================================
+
+Stmt   = Statement
+Expr   = Expression
+Term   = Term
+Factor = Factor
+id     = Identifier
+
+
+====================================================
+3. IF STATEMENT
+====================================================
+
+Stmt   = Statement
+Expr   = Expression
+
+
+====================================================
+4. WHILE LOOP
+====================================================
+
+Stmt   = Statement
+Expr   = Expression
+
+
+====================================================
+5. FOR LOOP
+====================================================
+
+Stmt   = Statement
+Expr   = Expression
+
+
+====================================================
+6. BLOCK STATEMENT
+====================================================
+
+Block     = Block of Statements
+StmtList  = Statement List
+Stmt      = Statement
+ε         = Epsilon (Empty String)
+
+
+====================================================
+7. FUNCTION DECLARATION
+====================================================
+
+Function   = Function Definition
+Type       = Data Type
+id         = Identifier
+Params     = Parameters
+ParamList  = Parameter List
+Param      = Single Parameter
+Block      = Function Body
+
+
+====================================================
+8. FUNCTION CALL
+====================================================
+
+Call       = Function Call
+Args       = Arguments
+ArgList    = Argument List
+Expr       = Expression
+
+
+====================================================
+9. VARIABLE DECLARATION
+====================================================
+
+Decl       = Declaration
+Type       = Data Type
+id         = Identifier
+Expr       = Expression
+
+
+====================================================
+10. RELATIONAL EXPRESSIONS
+====================================================
+
+RelExpr    = Relational Expression
+Expr       = Expression
+
+
+====================================================
+11. BOOLEAN EXPRESSIONS
+====================================================
+
+BoolExpr   = Boolean Expression
+BoolTerm   = Boolean Term
+BoolFactor = Boolean Factor
+RelExpr    = Relational Expression
+
+
+====================================================
+12. ARRAY DECLARATION
+====================================================
+
+ArrayDecl  = Array Declaration
+Type       = Data Type
+id         = Identifier
+num        = Number
+
+
+====================================================
+13. ARRAY ACCESS
+====================================================
+
+ArrayAccess = Array Access
+id          = Identifier
+Expr        = Expression
+
+
+====================================================
+14. RETURN STATEMENT
+====================================================
+
+Stmt        = Statement
+Expr        = Expression
+
+
+====================================================
+15. DO-WHILE LOOP
+====================================================
+
+Stmt        = Statement
+Expr        = Expression
+
+
+====================================================
+16. SWITCH STATEMENT
+====================================================
+
+Stmt        = Statement
+CaseList    = List of Cases
+Case        = Single Case
+StmtList    = Statement List
+Expr        = Expression
+
+
+====================================================
+17. SIMPLE IDENTIFIER
+====================================================
+
+id          = Identifier
+letter      = Alphabet Character
+
+Examples:
+abc
+count
+total
+name
+
+
+====================================================
+18. INTEGER NUMBER
+====================================================
+
+num         = Number
+digit       = Single Digit
+
+Examples:
+10
+123
+4567
+
+
+====================================================
+19. COMPLETE PROGRAM
+====================================================
+
+Program      = Complete Program
+Declarations = Variable Declarations
+Decl         = Declaration
+Functions    = Function Definitions
+Function     = Function Definition
+
+
+====================================================
+COMMON COMPILER DESIGN SYMBOLS
+====================================================
+
+CFG          = Context-Free Grammar
+RE           = Regular Expression
+NFA          = Non-deterministic Finite Automaton
+DFA          = Deterministic Finite Automaton
+PDA          = Pushdown Automaton
+AST          = Abstract Syntax Tree
+Parse Tree   = Syntax Tree
+
+====================================================
+GRAMMAR NOTATION SYMBOLS
+====================================================
+
+→   = Produces / Can Be Replaced By
+
+|   = OR
+
+ε   = Epsilon
+      (Empty String / Nothing)
+
+( ) = Grouping
+
+{ } = Block
+
+[ ] = Array Index
+
+;   = Statement Terminator
+
+====================================================
+MOST IMPORTANT EXAM SYMBOLS
+====================================================
+
+E       = Expression
+T       = Term
+F       = Factor
+Stmt    = Statement
+Expr    = Expression
+Decl    = Declaration
+Type    = Data Type
+id      = Identifier
+num     = Number
+ε       = Empty String
+
+
+token -> parser -> parse tree
+====================================
+
+
+
+
+
+
+
+
+
+
+Parser Types in Compiler Design
+
+Parser
+│
+├── Top-Down Parser
+│     │
+│     ├── Recursive Descent Parser
+│     └── LL(1) Parser
+│
+└── Bottom-Up Parser
+      │
+      ├── Shift Reduce Parser
+      ├── Operator Precedence Parser
+      └── LR Parsers
+            │
+            ├── LR(0)
+            ├── SLR(1)Simple LR
+            ├── Canonical LR(1) CLR / Canonical LR(1)
+            └── Look Ahead LR LALR(1)
+
+Top-Down Parsing
+Grammar
+   ↓
+Sentence
+
+E
+↓
+T
+↓
+id
+
+Bottom-Up Parsing
+Sentence
+   ↓
+Grammar
+
+id
+↓
+T
+↓
+E
+
+
+What is LL
+LL is a Top-Down Parsing family.
+
+L  = Left-to-right scanning
+L  = Leftmost derivation
+
+What is LR?
+LR is a Bottom-Up Parsing family.
+
+L = Left-to-right scan
+
+R = Rightmost derivation
+    in reverse
+
+
+
+
+
+
+
+
+| Feature           | LL(1)            | LR(1)          |
+| ----------------- | ---------------- | -------------- |
+| Type              | Top Down         | Bottom Up      |
+| Parse Tree        | Root → Leaves    | Leaves → Root  |
+| Left Recursion    | Not Allowed      | Allowed        |
+| Easy to Implement | Yes              | Hard           |
+| Power             | Less             | More           |
+| Speed             | Fast             | Fast           |
+| Used in           | Simple Languages | Real Compilers |
+
+
+
+
+
+
+===============================================
+
+
