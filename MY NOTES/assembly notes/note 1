@@ -1,0 +1,253 @@
+
+
+2. Registers
+
+mov rax, 10
+mov rbx, 20
+
+
+3. MOV
+
+mov rax, rbx
+
+4. Arithmetic
+
+add rax, 5
+sub rax, 2
+
+
+5. Jumps
+
+cmp rax, rbx
+je equal
+
+7. Stack
+
+push rax
+pop rax
+
+
+8. Functions
+call func
+func:
+ret
+
+9. Memory
+mov rax, [num]
+
+10. Flags
+cmp rax, rbx
+jg greater
+
+11. Interrupts
+int 0x80
+
+12.syscall
+
+mov rax, 60
+syscall
+
+13.Kernel
+_start:
+jmp $
+
+14.Filesystem (read block)
+call read_sector
+
+15.Networking
+call send_packet
+------------------------------------------------
+hello world
+
+
+global _start
+
+section .data
+    msg db "Hello World", 10
+    len equ $ - msg
+
+section .text
+
+_start:
+
+    ; write(1, msg, len)
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, msg
+    mov rdx, len
+    syscall
+
+    ; exit(0)
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+
+
+-
+nasm -f elf64 hello.asm -o hello.o
+ld hello.o -o hello
+
+./hello
+
+-------------------------------
+Arithmetic Example
+
+
+global _start
+
+section .text
+
+_start:
+
+    mov rax, 10
+    mov rbx, 20
+
+    add rax, rbx
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+-
+nasm -f elf64 math.asm -o math.o
+ld math.o -o math
+./math
+echo $?
+--------------------------------------
+
+Loop Example
+
+
+global _start
+
+section .text
+
+_start:
+
+    mov rcx, 5
+
+again:
+    dec rcx
+    jnz again
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+-
+nasm -f elf64 loop.asm -o loop.o
+ld loop.o -o loop
+./loop
+
+-------------------------------------------
+global _start
+
+section .text
+
+_start:
+
+    call myfunc
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+myfunc:
+
+    mov rax, 123
+
+    ret
+
+---------
+nasm -f elf64 function.asm -o function.o
+ld function.o -o function
+./function
+
+-------------------------------------------------------
+Memory Example
+
+
+global _start
+
+section .data
+    number dq 100
+
+section .text
+
+_start:
+
+    mov rax, [number]
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+
+
+--------
+nasm -f elf64 memory.asm -o memory.o
+ld memory.o -o memory
+./memory
+echo $?
+
+
+
+-----------------------------------------------
+Stack Example
+
+global _start
+
+section .text
+
+_start:
+
+    mov rax, 50
+
+    push rax
+
+    mov rax, 0
+
+    pop rax
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+---
+nasm -f elf64 stack.asm -o stack.o
+ld stack.o -o stack
+./stack
+echo $?
+
+-----------------------------------
+Function
+
+
+global _start
+
+section .text
+
+_start:
+
+    call my_function
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+my_function:
+
+    mov rax, 123
+
+    ret
+
+--
+nasm -f elf64 fun.asm -o fun.o
+ld fun.o -o fun
+./fun
+echo $?
+
+-------------------
