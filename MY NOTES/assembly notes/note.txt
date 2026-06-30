@@ -1,0 +1,839 @@
+
+
+2. Registers
+
+mov rax, 10
+mov rbx, 20
+
+
+3. MOV
+
+mov rax, rbx
+
+4. Arithmetic
+
+add rax, 5
+sub rax, 2
+
+
+5. Jumps
+
+cmp rax, rbx
+je equal
+
+7. Stack
+
+push rax
+pop rax
+
+
+8. Functions
+call func
+func:
+ret
+
+9. Memory
+mov rax, [num]
+
+10. Flags
+cmp rax, rbx
+jg greater
+
+11. Interrupts
+int 0x80
+
+12.syscall
+
+mov rax, 60
+syscall
+
+13.Kernel
+_start:
+jmp $
+
+14.Filesystem (read block)
+call read_sector
+
+15.Networking
+call send_packet
+
+
+global _start          ; make _start visible to the linker
+
+section .data          ; initialized read-write data
+section .text          ; code (read-only, executable)
+_start:                ; program entry point (not main!)
+
+global _start tells the linker that the label _start should be used as the entry point of the executable.
+
+
+.data holds constants like the string to print.
+.text holds the actual machine instructions.
+
+
+db = “define bytes”. This puts the ASCII characters Hello World plus a newline (ASCII code 10) into memory.
+
+equ = “equate”, like a constant.
+$ is the current address (here, just after the string).
+
+
+mov rax, 1      ; syscall number for sys_write
+mov rdi, 1      ; file descriptor 1 = stdout
+mov rsi, msg    ; pointer to the buffer (our string)
+mov rdx, len    ; number of bytes to write
+syscall         ; invoke the kernel
+
+mov rax, 60     ; syscall number for sys_exit
+xor rdi, rdi    ; exit code 0 (xor rdi,rdi zeros rdi efficiently)
+syscall
+
+
+nasm -f elf64 hello.asm -o hello.o   # assemble to 64-bit ELF object
+ld hello.o -o hello                  # link into a static executable
+./hello                              # run
+------------------------------------------------
+hello world
+
+
+global _start
+
+section .data
+    msg db "Hello World", 10
+    len equ $ - msg
+
+section .text
+
+_start:
+
+    ; write(1, msg, len)
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, msg
+    mov rdx, len
+    syscall
+
+    ; exit(0)
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+
+
+-
+nasm -f elf64 hello.asm -o hello.o
+ld hello.o -o hello
+
+./hello
+----------------------------
+create label
+my_label:        ; ✅ letters, underscore - fine
+loop1:            ; ✅ letters + numbers - fine
+_start:           ; ✅ starts with underscore - fine
+
+1loop:            ; ❌ can't start with a number
+my-label:         ; ❌ can't use hyphen
+
+
+a label is a name followed by a colon (:) 
+my_label: 
+
+loop
+
+global _start
+section .text
+
+_start:
+    mov rcx, 3        ; counter = 3
+
+count_loop:           ; ← label created here
+    dec rcx           ; rcx = rcx - 1
+    cmp rcx, 0
+    jne count_loop    ; jump back to label if rcx isn't 0 yet
+
+    mov rdi, rcx
+    mov rax, 60
+    syscall
+----------------------
+variable
+
+section .data
+    x: dq 10        ; a variable named x, holding 10 (8 bytes)
+    y: dd 5         ; a variable named y, holding 5 (4 bytes)
+    msg: db "hi", 0 ; a string variable
+
+section .text
+global _start
+_start:
+    mov rax, [x]    ; load the VALUE of x into rax
+    mov rbx, [y]
+
+    add rax, rbx
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+-------------------------------
+rdx XOR rdx = 0   ← no matter what was in rdx before
+
+Arithmetic Example
+
+
+global _start
+
+section .text
+
+_start:
+
+    mov rax, 10
+    mov rbx, 20
+
+    add rax, rbx
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+-
+nasm -f elf64 math.asm -o math.o
+ld math.o -o math
+./math
+echo $?
+
+
+Subtraction (SUB)
+global _start
+section .text
+_start:
+    mov rax, 50
+    mov rbx, 20
+    sub rax, rbx      ; rax = rax - rbx = 30
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+ Multiplication (MUL)
+global _start
+section .text
+_start:
+    mov rax, 10
+    mov rbx, 5
+    mul rbx           ; rax = rax * rbx = 50
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+
+Division (DIV)
+global _start
+section .text
+_start:
+    mov rax, 50
+    xor rdx, rdx      ; clear rdx FIRST — important!
+    mov rbx, 5
+    div rbx           ; rax = rax / rbx = 10 (quotient)
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+--------------------------------------
+conditional statement
+jne  Jump if Not Equa
+if statement
+C version:
+if (a == b) {
+    result = 1;
+}
+
+global _start
+section .text
+_start:
+    mov rax, 10          ; RAX = 10
+    mov rbx, 10          ; RBX = 10
+
+    cmp rax, rbx         ; Compare RAX with RBX (sets CPU flags)
+    jne skip             ; Jump to 'skip' if they are NOT equal
+
+    mov rax, 1           ; This runs only if RAX == RBX (they are equal)
+
+skip:
+    mov rdi, rax         ; Copy RAX (exit code) into RDI
+    mov rax, 60          ; syscall number for exit
+    syscall              ; exit(rdi)
+
+2. if / else
+
+C version:
+if (a == b) {
+    result = 1;
+} else {
+    result = 2;
+}
+
+global _start
+section .text
+_start:
+    mov rax, 10          ; RAX = 10
+    mov rbx, 20          ; RBX = 20
+
+    cmp rax, rbx         ; Compare RAX with RBX (subtract invisibly, set flags)
+    je  if_true          ; Jump to 'if_true' if Equal (ZF=1)
+    jmp if_false         ; Otherwise, unconditionally jump to 'if_false'
+
+if_true:
+    mov rax, 1           ; This runs only if RAX == RBX
+    jmp end_if           ; Skip the else block!
+
+if_false:
+    mov rax, 2           ; This runs if they are NOT equal
+
+end_if:
+    mov rdi, rax         ; Set exit code to whatever RAX became
+    mov rax, 60          ; syscall: exit
+    syscall
+
+if / elif / else
+
+if (a > b) {
+    result = 1;
+} else if (a == b) {
+    result = 2;
+} else {
+    result = 3;
+}
+
+global _start
+section .text
+_start:
+    mov rax, 10           ; RAX = 10  (we’ll call it A)
+    mov rbx, 10           ; RBX = 10  (we’ll call it B)
+
+    cmp rax, rbx          ; Compute A - B internally, set flags
+    jg  case_gt           ; Jump if A > B  (i.e., result positive, SF=OF, ZF=0)
+    je  case_eq           ; Jump if A == B (ZF=1)
+    jmp case_lt           ; Otherwise → A < B
+
+case_gt:
+    mov rax, 1            ; Exit code 1 means "greater than"
+    jmp end_if
+
+case_eq:
+    mov rax, 2            ; Exit code 2 means "equal"
+    jmp end_if
+
+case_lt:
+    mov rax, 3            ; Exit code 3 means "less than"
+    jmp end_if
+
+end_if:
+    mov rdi, rax           ; Exit code = RAX (1, 2, or 3)
+    mov rax, 60            ; syscall: exit
+    syscall
+
+---------------------------
+Loop Example
+
+
+global _start
+
+section .text
+
+_start:
+
+    mov rcx, 5
+
+again:
+    dec rcx
+    jnz again
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+-
+nasm -f elf64 loop.asm -o loop.o
+ld loop.o -o loop
+./loop
+
+
+
+
+for (int i = 0; i < 5; i++) {
+    sum = sum + i;
+}
+
+
+global _start
+section .text
+_start:
+    mov rcx, 0            ; i = 0   (counter)
+    mov rax, 0            ; sum = 0
+
+for_loop:
+    cmp rcx, 5            ; Compare i with 5
+    jge end_for           ; If i >= 5, exit the loop
+
+    add rax, rcx          ; sum = sum + i
+    inc rcx               ; i++
+    jmp for_loop          ; Go back and check the condition again
+
+end_for:
+    mov rdi, rax          ; Exit code = sum
+    mov rax, 60           ; syscall: exit
+    syscall
+
+
+int i = 0;
+while (i < 5) {
+    sum = sum + i;
+    i++;
+}
+
+
+global _start
+section .text
+_start:
+    mov rcx, 0            ; i = 0   (counter)
+    mov rax, 0            ; sum = 0
+
+while_loop:
+    cmp rcx, 5            ; Check: is i >= 5?
+    jge end_while         ; If yes, exit the loop
+
+    add rax, rcx          ; sum = sum + i
+    inc rcx               ; i = i + 1
+    jmp while_loop        ; Go back and check again
+
+end_while:
+    mov rdi, rax          ; Exit code = sum (10)
+    mov rax, 60           ; syscall: exit
+    syscall
+
+
+int i = 0;
+do {
+    sum = sum + i;
+    i++;
+} while (i < 5);
+
+global _start
+section .text
+_start:
+    mov rcx, 0                ; i = 0
+    mov rax, 0                ; sum = 0
+
+do_while_loop:
+    add rax, rcx              ; sum = sum + i   (body runs immediately)
+    inc rcx                   ; i = i + 1
+
+    cmp rcx, 5                ; check: is i < 5?
+    jl  do_while_loop         ; if i < 5, repeat (i is already incremented!)
+
+    mov rdi, rax              ; Exit code = sum
+    mov rax, 60
+    syscall
+-------------------------------------------
+global _start
+
+section .text
+
+_start:
+
+    call myfunc
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+myfunc:
+
+    mov rax, 123
+
+    ret
+
+---------
+nasm -f elf64 function.asm -o function.o
+ld function.o -o function
+./function
+
+-------------------------------------------------------
+
+Read text and print it back
+
+global _start
+
+section .bss
+    buffer: resb 50      ; empty box, 50 bytes, to hold user input
+
+section .text
+_start:
+    ; ---- read input ----
+    mov rax, 0           ; syscall: read
+    mov rdi, 0           ; stdin
+    mov rsi, buffer       ; store input here
+    mov rdx, 50            ; read up to 50 bytes
+    syscall
+
+    ; rax now holds HOW MANY bytes were actually typed
+    mov rdx, rax          ; reuse that count for write
+
+    ; ---- print it back ----
+    mov rax, 1            ; syscall: write
+    mov rdi, 1            ; stdout
+    mov rsi, buffer        ; print from buffer
+    syscall
+
+    ; ---- exit ----
+    mov rax, 60
+    mov rdi, 0
+    syscall
+
+ Read a number and use it in math (the part students usually want!)
+global _start
+
+section .bss
+    buffer: resb 10
+
+section .text
+_start:
+    ; ---- read input ----
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, buffer
+    mov rdx, 10
+    syscall
+
+    ; ---- convert ASCII digit to real number ----
+    mov al, [buffer]     ; grab the first typed character
+    sub al, '0'           ; ASCII trick: subtract '0' to get real value
+                          ; e.g. '5' (53) - '0' (48) = 5
+
+    ; ---- use it in math: add 10 to whatever was typed ----
+    movzx rax, al          ; expand al safely into full rax
+    add rax, 10
+
+    ; ---- exit with result as exit code ----
+    mov rdi, rax
+    mov rax, 60
+    syscall
+------------------------------------------------------------
+
+Memory Example
+
+
+global _start
+
+section .data
+    number dq 100
+
+section .text
+
+_start:
+
+    mov rax, [number]
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+
+
+--------
+nasm -f elf64 memory.asm -o memory.o
+ld memory.o -o memory
+./memory
+echo $?
+
+
+
+-----------------------------------------------
+Stack Example
+
+global _start
+
+section .text
+
+_start:
+
+    mov rax, 50
+
+    push rax
+
+    mov rax, 0
+
+    pop rax
+
+    mov rdi, rax
+    mov rax, 60
+    syscall
+
+---
+nasm -f elf64 stack.asm -o stack.o
+ld stack.o -o stack
+./stack
+echo $?
+
+-----------------------------------
+Function
+
+
+global _start
+
+section .text
+
+_start:
+
+    call my_function
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+my_function:
+
+    mov rax, 123
+
+    ret
+
+--
+nasm -f elf64 fun.asm -o fun.o
+ld fun.o -o fun
+./fun
+echo $?
+
+-------------------
+file system 
+Example 1: Create a file and write text into it
+
+global _start
+
+section .data
+    filename db "output.txt", 0      ; file name, must end with 0 (null terminator)
+    msg db "Hello File!", 10          ; text to write, 10 = newline
+    msg_len equ $ - msg
+
+section .text
+_start:
+    ; ---- open (or create) the file ----
+    mov rax, 2          ; syscall: open
+    mov rdi, filename    ; which file
+    mov rsi, 0101o        ; flags: O_CREAT|O_WRONLY (create it, write-only)
+    mov rdx, 0644o        ; permissions: rw-r--r--
+    syscall
+
+    mov rdi, rax          ; save the file descriptor (kernel returns it in rax)
+
+    ; ---- write into the file ----
+    mov rax, 1            ; syscall: write
+    mov rsi, msg
+    mov rdx, msg_len
+    syscall
+
+    ; ---- close the file ----
+    mov rax, 3            ; syscall: close
+    syscall
+
+    ; ---- exit ----
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+
+nasm -f elf64 writefile.asm -o writefile.o
+ld writefile.o -o writefile
+./writefile
+cat output.txt
+
+
+Example 2: Read text back out of a file
+global _start
+
+section .data
+    filename db "output.txt", 0
+
+section .bss
+    buffer resb 100        ; empty box to hold what we read
+
+section .text
+_start:
+    ; ---- open the file (read-only) ----
+    mov rax, 2
+    mov rdi, filename
+    mov rsi, 0          ; flag 0 = O_RDONLY (read-only)
+    syscall
+
+    mov rdi, rax         ; save file descriptor
+
+    ; ---- read its contents into buffer ----
+    mov rax, 0           ; syscall: read
+    mov rsi, buffer
+    mov rdx, 100
+    syscall
+
+    mov rdx, rax          ; rax = how many bytes were actually read
+
+    ; ---- close the file ----
+    push rdx               ; save byte-count (close will overwrite registers)
+    mov rax, 3
+    syscall
+    pop rdx
+
+    ; ---- print what we read, to the screen ----
+    mov rax, 1
+    mov rdi, 1             ; stdout
+    mov rsi, buffer
+    syscall
+
+    ; ---- exit ----
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+nasm -f elf64 readfile.asm -o readfile.o
+ld readfile.o -o readfile
+./readfile
+
+
+
+
+array:
+
+section .data
+    arr dq 10, 20, 30, 40, 50   ; array of 5 qwords
+
+section .text
+    global _start
+
+_start:
+    mov rbx, arr        ; base address of array
+    mov rcx, 0          ; index
+
+    ; access arr[2] = 30
+    mov rax, [rbx + rcx*8 + 16]   ; base + 0*8 + 2*8 = arr[2]
+
+    ; or simply:
+    mov rax, [arr + 2*8]
+
+
+
+
+compare with two string
+
+section .data
+    s1 db "Hello", 0
+    s2 db "Hello", 0
+    s3 db "World", 0
+
+section .text
+    global _start
+
+_start:
+    ; compare s1 and s2
+    mov rsi, s1
+    mov rdi, s2
+    mov rcx, 5
+    repe cmpsb          ; compare while equal, up to rcx bytes
+    je  .equal
+    jmp .notequal
+
+.equal:
+    mov rax, 60
+    mov rdi, 0          ; exit 0 = equal
+    syscall
+
+.notequal:
+    mov rax, 60
+    mov rdi, 1          ; exit 1 = not equal
+    syscall
+
+
+
+Passing arguments
+
+section .text
+    global _start
+
+; add(a, b) -> rax
+add_nums:
+    mov rax, rdi            ; rax = first arg
+    add rax, rsi            ; rax += second arg
+    ret
+
+; multiply(a, b) -> rax
+multiply:
+    mov rax, rdi
+    imul rax, rsi
+    ret
+
+_start:
+    mov rdi, 10
+    mov rsi, 20
+    call add_nums           ; rax = 30
+
+    mov rdi, 6
+    mov rsi, 7
+    call multiply           ; rax = 42
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+
+
+Number to ASCII (Print a Number)
+
+
+section .bss
+    buf resb 20
+
+section .text
+    global _start
+
+; converts rax to decimal string
+; result pointer in rsi, length in rdx
+int_to_str:
+    lea rdi, [buf + 19]
+    mov byte [rdi], 10          ; newline at end
+    dec rdi
+    mov rcx, 0                  ; digit count
+
+    test rax, rax
+    jnz .convert
+    mov byte [rdi], '0'
+    dec rdi
+    inc rcx
+    jmp .done
+
+.convert:
+    cmp rax, 0
+    je .done
+    xor rdx, rdx
+    mov rbx, 10
+    div rbx                     ; rax = quotient, rdx = remainder
+    add dl, '0'                 ; digit to ASCII
+    mov [rdi], dl
+    dec rdi
+    inc rcx
+    jmp .convert
+
+.done:
+    inc rdi                     ; point to first digit
+    mov rsi, rdi
+    inc rcx                     ; include newline
+    mov rdx, rcx
+    ret
+
+_start:
+    mov rax, 12345
+    call int_to_str
+
+    mov rax, 1
+    mov rdi, 1
+    syscall                     ; print "12345\n"
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
