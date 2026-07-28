@@ -1,0 +1,17 @@
+Linux File System - Easy Reference Guide
+Prepared by: m.manikandan
+
+S.No,Directory,Meaning,Easy Explanation,Real-Life Example
+1,/,Root Directory,"This is the very top of everything. All other folders live inside this one, like the trunk of a tree.",It's like the main gate of a house. Everything else is inside it.
+2,/home,Home Directory,"Personal folder for each user. Your documents, downloads, and desktop files are stored here.",It's like your own bedroom - your personal space in the house.
+3,/root,Root User's Home,"The admin (root user)'s personal folder. Different from /home, this is only for the administrator.","It's like the house owner's private room, separate from everyone else's."
+4,/etc,Configuration Files,Holds settings and configuration files for the system and installed programs.,It's like an instructions manual or settings booklet for the whole house.
+5,/bin,Essential User Commands,"Basic programs everyone can use, such as ls, cp, and mv.",It's like a toolbox kept in the living room that anyone in the house can use.
+6,/sbin,System Admin Commands,"Programs mainly used by the admin, such as reboot and shutdown.","It's like a toolbox kept in a locked cupboard, only for the owner."
+7,/usr,Unix System Resources,"Contains most installed apps, libraries, and documentation - similar to Program Files in Windows.",It's like a big storeroom holding most of the household appliances.
+8,/var,Variable Data,"Holds data that keeps changing, such as logs, mail, and website files.",It's like a diary that gets new entries added every single day.
+9,/tmp,Temporary Files,"Stores temporary files that can be safely deleted anytime, especially after a restart.",It's like a trash bin or scratch pad for things you don't need to keep.
+10,/opt,Optional Software,Holds extra or third-party software that isn't part of the base system.,It's like a guest room used for extra furniture that doesn't belong elsewhere.
+11,/dev,Device Files,"Represents hardware like hard disks, USB drives, and printers as if they were files.",It's like the switchboard connecting all electrical appliances in the house.
+12,/proc,Process Information,A virtual folder showing live info about running processes and the kernel - it doesn't really exist on disk.,It's like a live CCTV screen showing what's happening in the house right now.
+13,/sys,System Information,"A virtual folder exposing details about the kernel, hardware, and device drivers.",It's like a control panel showing the technical wiring details of the house.

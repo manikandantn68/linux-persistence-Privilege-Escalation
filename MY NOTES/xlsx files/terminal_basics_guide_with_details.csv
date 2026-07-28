@@ -1,0 +1,11 @@
+S.No,Term,Meaning,Function,Author Name,Created Year,Where Use,Usage
+1,Terminal,Program window,Where you type commands,Concept/Various,1960s+,"All OS (Linux, macOS, Windows)",Typing and executing commands via a text interface
+2,Shell,Command interpreter,Reads and runs your commands,Louis Pouzin (coined term),1964 (concept),"Unix, Linux, macOS",Interprets user commands and runs scripts/programs
+3,sh,Bourne Shell,The original Unix shell,Stephen Bourne,1979,"Unix systems, legacy servers","System scripting, automation, POSIX-compliant scripts"
+4,Csh,C Shell,Uses C-like syntax,Bill Joy,1978,"BSD Unix, historical systems","Interactive use, scripting with C-like syntax"
+5,Ksh,Korn Shell,Mix of sh and csh,David Korn,1983,"AIX, HP-UX, Solaris, commercial Unix","Advanced scripting, system administration, interactive use"
+6,Tcsh,Enhanced C Shell,Csh plus extra features,Ken Greer,1983,"FreeBSD, macOS (historical), Linux","Interactive login shell, command-line editing, C shell scripting"
+7,Bash,Bourne Again Shell,Default Linux shell,Brian Fox,1989,"Linux, macOS (pre-Catalina), WSL, Git Bash","General-purpose scripting, interactive use, system administration"
+8,Zsh,Z Shell,"Modern shell, extra features",Paul Falstad,1990,"macOS (Catalina+), Kali Linux, power users","Highly customizable interactive shell, scripting, plugin ecosystem"
+9,Dash,Debian Almquist Shell,"Small, fast, script-friendly",Herbert Xu (port),1997 (ported),"Debian, Ubuntu, Linux distros as /bin/sh","System startup scripts, fast POSIX-compliant scripting"
+10,Fish,Friendly Interactive Shell,Colorful and beginner-friendly,Axel Liljencrantz,2005,"Linux, macOS, GhostBSD (default)",Beginner-friendly interactive shell with auto-suggestions and syntax highlighting
