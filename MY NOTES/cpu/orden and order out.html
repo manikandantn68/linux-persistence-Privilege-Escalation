@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>In-Order vs Out-of-Order · Auto / Manual</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        body {
+            background: #080b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .container {
+            max-width: 1500px;
+            width: 100%;
+            background: #111724;
+            border-radius: 44px;
+            padding: 24px 28px 32px;
+            border: 1px solid #29324e;
+            box-shadow: 0 30px 60px -12px #000000cc;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #7aa3ff, #c08aff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .badge {
+            background: #1b233b;
+            padding: 6px 18px;
+            border-radius: 40px;
+            color: #94abdd;
+            font-size: 14px;
+            border: 1px solid #36466b;
+        }
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 30px;
+            background: #0c111f;
+            padding: 10px 22px;
+            border-radius: 60px;
+            margin-bottom: 14px;
+            border: 1px solid #27314c;
+            align-items: center;
+        }
+        .stats .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            color: #b3c5f0;
+            font-size: 15px;
+        }
+        .stats .stat-item .num {
+            font-weight: 700;
+            font-size: 20px;
+            color: #fff;
+            min-width: 36px;
+            display: inline-block;
+        }
+        .stats .stat-item .num.io-num { color: #5b9aff; }
+        .stats .stat-item .num.ooo-num { color: #ffb347; }
+        .stats .divider {
+            width: 1px;
+            height: 28px;
+            background: #2a3555;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 16px;
+            margin-bottom: 14px;
+        }
+        .controls .btn {
+            background: #1f2844;
+            border: 1px solid #3b4a72;
+            color: #d0e0ff;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .controls .btn:hover {
+            background: #2e3b62;
+            border-color: #6a84c0;
+            transform: scale(1.02);
+        }
+        .controls .btn.danger {
+            border-color: #b54a3a;
+            background: #2f1a1a;
+            color: #ff9a7a;
+        }
+        .controls .btn.danger:hover {
+            background: #4a2828;
+            border-color: #e07050;
+        }
+        .controls .btn.primary {
+            border-color: #3a7ab5;
+            background: #1a2a4a;
+            color: #7ab8ff;
+        }
+        .controls .btn.primary:hover {
+            background: #2a3a6a;
+            border-color: #5a9ae0;
+        }
+        .controls .btn.active-mode {
+            border-color: #f0b34a;
+            background: #2a2a1a;
+            color: #ffd966;
+            box-shadow: 0 0 12px #f0b34a44;
+        }
+        .controls .info-badge {
+            color: #6a83b8;
+            font-size: 14px;
+            margin-left: auto;
+        }
+        .controls .info-badge strong {
+            color: #b0c8ff;
+        }
+        .canvas-wrap {
+            background: #060a12;
+            border-radius: 28px;
+            border: 1px solid #1f2840;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1500 / 700;
+            background: #060a12;
+        }
+        .footer {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            color: #4a5e8a;
+            font-size: 13px;
+            padding: 0 6px;
+        }
+        .footer .truth {
+            color: #7b93c8;
+        }
+        .footer .truth strong {
+            color: #c2d4ff;
+        }
+        .mode-indicator {
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 14px;
+            background: #1a2a2a;
+            color: #7acfcf;
+            border: 1px solid #2a5a5a;
+        }
+        .mode-indicator.manual {
+            background: #1a1a2a;
+            color: #aab8ff;
+            border-color: #3a4a7a;
+        }
+        @media (max-width: 800px) {
+            .container { padding: 12px; }
+            .header h1 { font-size: 18px; }
+            .stats { gap: 8px 14px; padding: 6px 12px; }
+            .stats .stat-item { font-size: 12px; }
+            .controls .btn { font-size: 13px; padding: 5px 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🧠 IN‑ORDER vs OUT‑OF‑ORDER · auto / manual</h1>
+        <span class="badge">⏱️ real‑time · true microarchitecture</span>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">🔄 Cycle <span class="num" id="cycleCount">0</span></div>
+        <div class="divider"></div>
+        <div class="stat-item">🔵 In‑Order IPC <span class="num io-num" id="ioIPC">0.00</span></div>
+        <div class="stat-item">🟠 OoO IPC <span class="num ooo-num" id="oooIPC">0.00</span></div>
+        <div class="divider"></div>
+        <div class="stat-item">✅ In‑Order done <span class="num io-num" id="ioTotal">0</span></div>
+        <div class="stat-item">✅ OoO done <span class="num ooo-num" id="oooTotal">0</span></div>
+        <div class="stat-item" style="margin-left:auto; display: flex; align-items: center; gap: 12px;">
+            <span id="stallIndicator" style="color:#6a83b8; font-size:13px;">⚡ normal</span>
+            <span id="modeDisplay" class="mode-indicator manual">⏸ MANUAL</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn danger" id="stallBtn">🧨 Inject Stall</button>
+        <button class="btn" id="resetBtn">⟳ Reset</button>
+        <button class="btn" id="stepBtn">⏭️ Step</button>
+        <button class="btn primary" id="modeToggle">▶ Auto</button>
+        <span class="info-badge">
+            <strong>Space</strong> = auto/manual · <strong>S</strong> = step · <strong>D</strong> = stall · <strong>R</strong> = reset
+        </span>
+    </div>
+
+    <div class="canvas-wrap">
+        <canvas id="canvas" width="1500" height="700"></canvas>
+    </div>
+
+    <div class="footer">
+        <span class="truth"><strong>TRUE:</strong> In‑Order stalls completely on a slow instruction.</span>
+        <span class="truth"><strong>TRUE:</strong> OoO executes <strong>other</strong> instructions ahead, then retires in order.</span>
+        <span class="truth"><strong>TRUE:</strong> OoO uses a Re‑order Buffer (ROB) to track completion order.</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const W = 1500, H = 700;
+
+        // ---- DOM refs ----
+        const cycleSpan = document.getElementById('cycleCount');
+        const ioIPCSpan = document.getElementById('ioIPC');
+        const oooIPCSpan = document.getElementById('oooIPC');
+        const ioTotalSpan = document.getElementById('ioTotal');
+        const oooTotalSpan = document.getElementById('oooTotal');
+        const stallIndicator = document.getElementById('stallIndicator');
+        const modeDisplay = document.getElementById('modeDisplay');
+        const modeToggleBtn = document.getElementById('modeToggle');
+        const stepBtn = document.getElementById('stepBtn');
+
+        // ---- drawing helpers ----
+        function draw3DBox(ctx, x, y, w, h, depth, color, label, sub) {
+            const dark = '#0a0e1a', light = '#2a3555';
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 24;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 12);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#4a5d8a';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x, y, w, h);
+            ctx.fillStyle = light;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + depth, y - depth);
+            ctx.lineTo(x + w + depth, y - depth);
+            ctx.lineTo(x + w, y);
+            ctx.fill();
+            ctx.strokeStyle = '#3a4d7a';
+            ctx.stroke();
+            ctx.fillStyle = dark;
+            ctx.beginPath();
+            ctx.moveTo(x + w, y);
+            ctx.lineTo(x + w + depth, y - depth);
+            ctx.lineTo(x + w + depth, y + h - depth);
+            ctx.lineTo(x + w, y + h);
+            ctx.fill();
+            ctx.strokeStyle = '#2a3d6a';
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(4,8,18,0.5)';
+            ctx.fillRect(x + 8, y + 8, w - 16, h - 16);
+            ctx.shadowBlur = 0;
+            ctx.font = 'bold 20px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#d0e4ff';
+            ctx.fillText(label, x + 18, y + 40);
+            ctx.font = '14px sans-serif';
+            ctx.fillStyle = '#809ac0';
+            ctx.fillText(sub || '', x + 18, y + 68);
+        }
+
+        function drawInst(ctx, x, y, color, size, label) {
+            const s = size || 36;
+            const half = s / 2;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 20;
+            const grad = ctx.createRadialGradient(x, y + 4, 2, x, y + 4, s * 0.9);
+            grad.addColorStop(0, color);
+            grad.addColorStop(0.6, color);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(x, y + 4, s * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(x - half, y - half, s, s, 5);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff30';
+            ctx.beginPath();
+            ctx.moveTo(x - half, y - half);
+            ctx.lineTo(x - half + 8, y - half - 8);
+            ctx.lineTo(x + half + 8, y - half - 8);
+            ctx.lineTo(x + half, y - half);
+            ctx.fill();
+            ctx.fillStyle = '#00000030';
+            ctx.beginPath();
+            ctx.moveTo(x + half, y - half);
+            ctx.lineTo(x + half + 8, y - half - 8);
+            ctx.lineTo(x + half + 8, y + half - 8);
+            ctx.lineTo(x + half, y + half);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff60';
+            ctx.lineWidth = 1.2;
+            ctx.strokeRect(x - half, y - half, s, s);
+            ctx.shadowBlur = 0;
+            if (label) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, x, y + 1);
+            }
+        }
+
+        // ---- state ----
+        let cycles = 0;
+        let ioCompleted = 0, oooCompleted = 0;
+        let nextInstId = 0;
+
+        // In-order: FIFO pipeline (max 6)
+        let ioQueue = [];
+
+        // Out-of-order
+        const OOO_WINDOW_SIZE = 6;
+        let oooWindow = [];
+        let oooLanes = [
+            { busy: false, inst: null, progress: 0, total: 0 },
+            { busy: false, inst: null, progress: 0, total: 0 },
+            { busy: false, inst: null, progress: 0, total: 0 }
+        ];
+        let oooRetireBuffer = [];
+        let oooNextRetireId = 0;
+
+        // ---- constants for drawing ----
+        const IO_X = 20, IO_Y = 120, IO_W = 620, IO_H = 460;
+        const OOO_X = 680, OOO_Y = 120, OOO_W = 800, OOO_H = 460;
+        const IO_FETCH_X = 60, IO_EXIT_X = 580;
+        const IO_LANE_Y = 240, IO_LANE_H = 52;
+        const OOO_WIN_X = 720, OOO_WIN_Y = 220, OOO_WIN_W = 100;
+        const OOO_LANES_X = [870, 980, 1090];
+        const OOO_LANE_Y_BASE = 220;
+        const OOO_LANE_H = 280;
+        const OOO_ROB_X = 1220, OOO_ROB_Y = 220;
+
+        // ---- helpers ----
+        function getInstColor(type) {
+            if (type === 'stall') return '#ff5544';
+            if (type === 'fp') return '#66ddff';
+            if (type === 'mem') return '#ffb347';
+            return '#5f9eff';
+        }
+
+        function createInst(type) {
+            const id = nextInstId++;
+            const lat = type === 'stall' ? 6 : 1;
+            return { id, type, lat, remaining: lat, color: getInstColor(type) };
+        }
+
+        // ---- core tick ----
+        function tick() {
+            cycles++;
+
+            // ---------- IN-ORDER ----------
+            if (ioQueue.length < 6 && Math.random() < 0.4) {
+                ioQueue.push(createInst());
+            }
+            if (ioQueue.length > 0) {
+                const head = ioQueue[0];
+                if (head.remaining > 0) head.remaining--;
+                if (head.remaining === 0) {
+                    ioQueue.shift();
+                    ioCompleted++;
+                }
+            }
+
+            // ---------- OUT-OF-ORDER ----------
+            if (oooWindow.length < OOO_WINDOW_SIZE && Math.random() < 0.4) {
+                oooWindow.push(createInst());
+            }
+
+            for (let i = 0; i < oooLanes.length; i++) {
+                const lane = oooLanes[i];
+                if (!lane.busy) {
+                    const idx = oooWindow.findIndex(inst => inst.remaining > 0);
+                    if (idx !== -1) {
+                        const inst = oooWindow[idx];
+                        oooWindow.splice(idx, 1);
+                        lane.busy = true;
+                        lane.inst = inst;
+                        lane.progress = 0;
+                        lane.total = inst.lat;
+                    }
+                }
+            }
+
+            for (const lane of oooLanes) {
+                if (lane.busy) {
+                    lane.progress++;
+                    if (lane.progress >= lane.total) {
+                        const inst = lane.inst;
+                        oooRetireBuffer.push({ id: inst.id, color: inst.color, lat: inst.lat });
+                        oooRetireBuffer.sort((a, b) => a.id - b.id);
+                        lane.busy = false;
+                        lane.inst = null;
+                        lane.progress = 0;
+                    }
+                }
+            }
+
+            while (oooRetireBuffer.length > 0 && oooRetireBuffer[0].id === oooNextRetireId) {
+                oooRetireBuffer.shift();
+                oooNextRetireId++;
+                oooCompleted++;
+            }
+
+            updateStats();
+            draw();
+        }
+
+        // ---- inject stall ----
+        function injectStall() {
+            if (ioQueue.length < 6) ioQueue.push(createInst('stall'));
+            else if (ioQueue.length > 0) ioQueue[0] = createInst('stall');
+
+            if (oooWindow.length < OOO_WINDOW_SIZE) oooWindow.push(createInst('stall'));
+            else if (oooWindow.length > 0) oooWindow[oooWindow.length - 1] = createInst('stall');
+        }
+
+        // ---- reset ----
+        function resetSim() {
+            ioQueue = [];
+            oooWindow = [];
+            oooLanes = [
+                { busy: false, inst: null, progress: 0, total: 0 },
+                { busy: false, inst: null, progress: 0, total: 0 },
+                { busy: false, inst: null, progress: 0, total: 0 }
+            ];
+            oooRetireBuffer = [];
+            oooNextRetireId = 0;
+            ioCompleted = 0;
+            oooCompleted = 0;
+            cycles = 0;
+            nextInstId = 0;
+            for (let i = 0; i < 4; i++) {
+                if (ioQueue.length < 6) ioQueue.push(createInst('alu'));
+                if (oooWindow.length < OOO_WINDOW_SIZE) oooWindow.push(createInst('alu'));
+            }
+            updateStats();
+            draw();
+        }
+
+        // ---- update stats ----
+        function updateStats() {
+            const ioIPC = cycles > 0 ? (ioCompleted / cycles) : 0;
+            const oooIPC = cycles > 0 ? (oooCompleted / cycles) : 0;
+            cycleSpan.textContent = cycles;
+            ioTotalSpan.textContent = ioCompleted;
+            oooTotalSpan.textContent = oooCompleted;
+            ioIPCSpan.textContent = ioIPC.toFixed(2);
+            oooIPCSpan.textContent = oooIPC.toFixed(2);
+
+            const hasStall = ioQueue.some(i => i.type === 'stall') ||
+                oooWindow.some(i => i.type === 'stall') ||
+                oooLanes.some(l => l.inst && l.inst.type === 'stall');
+            stallIndicator.textContent = hasStall ? '🧨 STALL ACTIVE' : '⚡ normal';
+            stallIndicator.style.color = hasStall ? '#ff7766' : '#6a83b8';
+        }
+
+        // ---- draw ----
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#060a12';
+            ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = '#141c2e';
+            ctx.lineWidth = 0.6;
+            for (let i = 0; i < W; i += 50) { ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, H);
+                ctx.stroke(); }
+            for (let i = 0; i < H; i += 50) { ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(W, i);
+                ctx.stroke(); }
+
+            // In-Order
+            draw3DBox(ctx, IO_X, IO_Y, IO_W, IO_H, 28, '#15203a', 'IN‑ORDER', 'strict order · 1 pipeline');
+            ctx.fillStyle = 'rgba(40, 60, 100, 0.2)';
+            ctx.fillRect(IO_FETCH_X, IO_LANE_Y, IO_EXIT_X - IO_FETCH_X, IO_LANE_H);
+            ctx.strokeStyle = '#3a507a';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 8]);
+            ctx.strokeRect(IO_FETCH_X, IO_LANE_Y, IO_EXIT_X - IO_FETCH_X, IO_LANE_H);
+            ctx.setLineDash([]);
+
+            for (let i = 0; i < Math.min(ioQueue.length, 6); i++) {
+                const inst = ioQueue[i];
+                const x = IO_FETCH_X + 18 + i * 70;
+                const y = IO_LANE_Y + IO_LANE_H / 2;
+                const isHead = (i === 0);
+                const size = isHead ? 42 : 34;
+                let label = inst.remaining > 0 ? `${inst.remaining}c` : '✔';
+                if (inst.type === 'stall') label = '⏳' + label;
+                drawInst(ctx, x, y, inst.color, size, label);
+            }
+
+            const headStall = ioQueue.length > 0 && ioQueue[0].type === 'stall' && ioQueue[0].remaining > 1;
+            if (headStall) {
+                ctx.fillStyle = 'rgba(255, 60, 40, 0.12)';
+                ctx.fillRect(IO_FETCH_X, IO_LANE_Y, IO_EXIT_X - IO_FETCH_X, IO_LANE_H);
+                ctx.fillStyle = '#ff6655';
+                ctx.font = 'bold 20px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('⛔ PIPELINE STALLED', (IO_FETCH_X + IO_EXIT_X) / 2, IO_LANE_Y - 16);
+            }
+            ctx.fillStyle = '#6a8abb';
+            ctx.font = '13px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('FETCH →', IO_FETCH_X + 6, IO_LANE_Y + IO_LANE_H + 30);
+            ctx.fillText('→ RETIRE', IO_EXIT_X - 70, IO_LANE_Y + IO_LANE_H + 30);
+            ctx.fillStyle = '#5b9aff';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.fillText(`✔ ${ioCompleted} retired`, IO_X + 20, IO_Y + IO_H - 20);
+
+            // Out-of-Order
+            draw3DBox(ctx, OOO_X, OOO_Y, OOO_W, OOO_H, 28, '#1f2848', 'OUT‑OF‑ORDER', 're‑order buffer · 3 exec lanes');
+
+            ctx.fillStyle = 'rgba(30, 50, 80, 0.3)';
+            ctx.fillRect(OOO_WIN_X, OOO_WIN_Y - 20, OOO_WIN_W, 380);
+            ctx.strokeStyle = '#4a6a9a';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(OOO_WIN_X, OOO_WIN_Y - 20, OOO_WIN_W, 380);
+            ctx.fillStyle = '#6a8abb';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('WINDOW', OOO_WIN_X + OOO_WIN_W / 2, OOO_WIN_Y - 30);
+            for (let i = 0; i < oooWindow.length; i++) {
+                const inst = oooWindow[i];
+                const x = OOO_WIN_X + OOO_WIN_W / 2;
+                const y = OOO_WIN_Y + 16 + i * 52;
+                let label = inst.remaining > 0 ? `${inst.remaining}c` : '';
+                if (inst.type === 'stall') label = '⏳' + label;
+                drawInst(ctx, x, y, inst.color, 30, label);
+            }
+
+            const laneLabels = ['ALU 1', 'ALU 2', 'MEM'];
+            for (let i = 0; i < 3; i++) {
+                const lx = OOO_LANES_X[i];
+                const ly = OOO_LANE_Y_BASE;
+                ctx.fillStyle = 'rgba(20, 30, 50, 0.4)';
+                ctx.fillRect(lx, ly, 70, OOO_LANE_H);
+                ctx.strokeStyle = '#3a507a';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(lx, ly, 70, OOO_LANE_H);
+                ctx.fillStyle = '#6a8abb';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(laneLabels[i], lx + 35, ly - 10);
+                const lane = oooLanes[i];
+                if (lane.busy && lane.inst) {
+                    const ratio = Math.min(1, lane.progress / lane.total);
+                    const yPos = ly + 20 + ratio * (OOO_LANE_H - 40);
+                    let label = `${Math.floor(ratio * 100)}%`;
+                    if (lane.inst.type === 'stall') label = '⏳' + label;
+                    drawInst(ctx, lx + 35, yPos, lane.inst.color, 34, label);
+                }
+            }
+
+            ctx.fillStyle = 'rgba(40, 60, 100, 0.2)';
+            ctx.fillRect(OOO_ROB_X, OOO_ROB_Y - 20, 160, 380);
+            ctx.strokeStyle = '#4a6a9a';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(OOO_ROB_X, OOO_ROB_Y - 20, 160, 380);
+            ctx.fillStyle = '#6a8abb';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('RE‑ORDER (ROB)', OOO_ROB_X + 80, OOO_ROB_Y - 30);
+
+            const showCount = Math.min(oooRetireBuffer.length, 6);
+            for (let i = 0; i < showCount; i++) {
+                const item = oooRetireBuffer[i];
+                const x = OOO_ROB_X + 80;
+                const y = OOO_ROB_Y + 16 + i * 52;
+                drawInst(ctx, x, y, item.color, 30, `#${item.id}`);
+            }
+            if (oooRetireBuffer.length > 6) {
+                ctx.fillStyle = '#809ac0';
+                ctx.font = '13px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`+${oooRetireBuffer.length - 6} more`, OOO_ROB_X + 80, OOO_ROB_Y + 360);
+            }
+            ctx.fillStyle = '#ffb347';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`✔ ${oooCompleted} retired`, OOO_X + 20, OOO_Y + OOO_H - 20);
+
+            // legend
+            ctx.fillStyle = '#4a6a9a';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'left';
+            const ly = H - 16;
+            ctx.fillStyle = '#5f9eff';
+            ctx.fillRect(10, ly - 8, 16, 16);
+            ctx.fillStyle = '#b0c8f0';
+            ctx.fillText('ALU', 30, ly + 4);
+            ctx.fillStyle = '#66ddff';
+            ctx.fillRect(90, ly - 8, 16, 16);
+            ctx.fillText('FP', 110, ly + 4);
+            ctx.fillStyle = '#ffb347';
+            ctx.fillRect(160, ly - 8, 16, 16);
+            ctx.fillText('MEM', 180, ly + 4);
+            ctx.fillStyle = '#ff5544';
+            ctx.fillRect(240, ly - 8, 16, 16);
+            ctx.fillText('STALL (6c)', 260, ly + 4);
+
+            ctx.fillStyle = '#3a507a';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText('⬅️ retire in program order', OOO_ROB_X + 160, OOO_ROB_Y + OOO_LANE_H + 10);
+        }
+
+        // ---- MODE MANAGEMENT ----
+        let isAuto = false;
+        let autoTimer = null;
+        const AUTO_INTERVAL = 850; // ms
+
+        function toggleMode() {
+            isAuto = !isAuto;
+            if (isAuto) {
+                // Switch to AUTO
+                autoTimer = setInterval(tick, AUTO_INTERVAL);
+                modeToggleBtn.textContent = '⏸ Pause';
+                modeToggleBtn.className = 'btn primary active-mode';
+                modeDisplay.textContent = '▶ AUTO';
+                modeDisplay.className = 'mode-indicator';
+                stepBtn.disabled = true;
+                stepBtn.style.opacity = '0.5';
+                stepBtn.style.cursor = 'default';
+            } else {
+                // Switch to MANUAL
+                clearInterval(autoTimer);
+                autoTimer = null;
+                modeToggleBtn.textContent = '▶ Auto';
+                modeToggleBtn.className = 'btn primary';
+                modeDisplay.textContent = '⏸ MANUAL';
+                modeDisplay.className = 'mode-indicator manual';
+                stepBtn.disabled = false;
+                stepBtn.style.opacity = '1';
+                stepBtn.style.cursor = 'pointer';
+            }
+        }
+
+        // ---- init ----
+        resetSim();
+
+        // ---- event bindings ----
+        document.getElementById('stallBtn').addEventListener('click', injectStall);
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (isAuto) {
+                // If auto, keep running but reset state
+                resetSim();
+            } else {
+                resetSim();
+            }
+        });
+        stepBtn.addEventListener('click', () => {
+            if (!isAuto) tick();
+        });
+        modeToggleBtn.addEventListener('click', toggleMode);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Space') {
+                e.preventDefault();
+                toggleMode();
+            }
+            if (e.key === 'd' || e.key === 'D') { injectStall();
+                e.preventDefault(); }
+            if (e.key === 'r' || e.key === 'R') { resetSim();
+                e.preventDefault(); }
+            if ((e.key === 's' || e.key === 'S') && !isAuto) { tick();
+                e.preventDefault(); }
+        });
+
+        // ---- polyfill ----
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (r > w / 2) r = w / 2;
+                if (r > h / 2) r = h / 2;
+                this.moveTo(x + r, y);
+                this.lineTo(x + w - r, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + r);
+                this.lineTo(x + w, y + h - r);
+                this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                this.lineTo(x + r, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - r);
+                this.lineTo(x, y + r);
+                this.quadraticCurveTo(x, y, x + r, y);
+                return this;
+            };
+        }
+
+        console.log('✅ In-Order vs OoO with Auto/Manual modes.');
+        console.log('💡 Press SPACE to toggle Auto/Manual, S=step, D=stall, R=reset.');
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scalar vs Superscalar CPU – 3D Real-Time</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #0b0e1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1300px;
+            width: 100%;
+            background: #131724;
+            border-radius: 40px;
+            padding: 30px 30px 40px;
+            box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.9);
+            border: 1px solid #2a314a;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a0c0ff, #7a9eff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .header .badge {
+            background: #1f263b;
+            padding: 8px 18px;
+            border-radius: 40px;
+            color: #a8b9e8;
+            font-size: 14px;
+            border: 1px solid #33405e;
+        }
+
+        /* Stats Bar */
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 40px;
+            background: #0d111f;
+            padding: 14px 24px;
+            border-radius: 60px;
+            margin-bottom: 20px;
+            border: 1px solid #283048;
+            align-items: center;
+        }
+        .stats .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            color: #b9c8f0;
+            font-size: 15px;
+        }
+        .stats .stat-item .num {
+            font-weight: 700;
+            font-size: 20px;
+            color: #fff;
+            min-width: 40px;
+            display: inline-block;
+        }
+        .stats .stat-item .num.scalar-num {
+            color: #5b9aff;
+        }
+        .stats .stat-item .num.super-num {
+            color: #ffb347;
+        }
+        .stats .divider {
+            width: 1px;
+            height: 28px;
+            background: #2a3350;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px 25px;
+            margin-bottom: 18px;
+        }
+        .controls .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #0d111f;
+            padding: 6px 18px 6px 14px;
+            border-radius: 40px;
+            border: 1px solid #2f3a5a;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .controls .toggle-wrap:hover {
+            border-color: #5b7bc0;
+        }
+        .controls .toggle-wrap input[type="checkbox"] {
+            appearance: none;
+            width: 44px;
+            height: 24px;
+            background: #2a3355;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.25s;
+            flex-shrink: 0;
+            border: 1px solid #3f4a70;
+        }
+        .controls .toggle-wrap input[type="checkbox"]:checked {
+            background: #e06b3d;
+            border-color: #ff8a4a;
+        }
+        .controls .toggle-wrap input[type="checkbox"]::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.25s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+        .controls .toggle-wrap input[type="checkbox"]:checked::after {
+            left: 22px;
+            background: #ffeedd;
+        }
+        .controls .toggle-label {
+            color: #b0c2ea;
+            font-size: 15px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .controls .dep-status {
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #1a2a3a;
+            color: #7bcfa6;
+            border: 1px solid #2b5a44;
+        }
+        .controls .dep-status.stalled {
+            background: #3a1f1f;
+            color: #ff8a7a;
+            border-color: #8a3a2a;
+        }
+        .controls .info-text {
+            color: #6e83b0;
+            font-size: 14px;
+            margin-left: auto;
+        }
+
+        /* Canvas */
+        .canvas-wrap {
+            background: #090c16;
+            border-radius: 28px;
+            border: 1px solid #232b44;
+            overflow: hidden;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1200 / 580;
+            background: #090c16;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: #4f6190;
+            font-size: 13px;
+            padding: 0 8px;
+        }
+        .footer .truth {
+            color: #8099d0;
+        }
+        .footer .truth strong {
+            color: #c0d0ff;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 16px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .stats {
+                gap: 10px 20px;
+                padding: 10px 16px;
+            }
+            .stats .stat-item {
+                font-size: 13px;
+            }
+            .controls .toggle-label {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚡ SCALAR vs SUPERSCALAR · 3D PIPELINE</h1>
+            <span class="badge">⏱️ real‑time · true silicon behaviour</span>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats" id="statsBar">
+            <div class="stat-item">🔄 Cycles <span class="num" id="cycleCount">0</span></div>
+            <div class="divider"></div>
+            <div class="stat-item">🔵 Scalar IPC <span class="num scalar-num" id="scalarIPC">1.00</span></div>
+            <div class="stat-item">🟠 Super IPC <span class="num super-num" id="superIPC">4.00</span></div>
+            <div class="divider"></div>
+            <div class="stat-item">✅ Scalar done <span class="num scalar-num" id="scalarTotal">0</span></div>
+            <div class="stat-item">✅ Super done <span class="num super-num" id="superTotal">0</span></div>
+            <div class="stat-item" style="margin-left:auto; color:#6e83b0; font-size:13px;">
+                <span id="depLabel">📦 independent</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="toggle-wrap" id="toggleWrap">
+                <input type="checkbox" id="depToggle" />
+                <span class="toggle-label">🧩 Simulate Data Dependency</span>
+            </div>
+            <span class="dep-status" id="depStatus">✓ NO STALL</span>
+            <span class="info-text">⏳ 1 tick = 1 clock cycle · instructions flow left → right</span>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-wrap">
+            <canvas id="canvas" width="1200" height="580"></canvas>
+        </div>
+
+        <!-- Footer – pure truth -->
+        <div class="footer">
+            <span class="truth"><strong>TRUE:</strong> Superscalar executes <strong>multiple</strong> independent instructions per cycle (up to 4 here).</span>
+            <span class="truth"><strong>TRUE:</strong> With dependencies, superscalar <strong>stalls</strong> — IPC drops to ~1, same as scalar.</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // ---- DOM refs ----
+            const cycleSpan = document.getElementById('cycleCount');
+            const scalarIPCSpan = document.getElementById('scalarIPC');
+            const superIPCSpan = document.getElementById('superIPC');
+            const scalarTotalSpan = document.getElementById('scalarTotal');
+            const superTotalSpan = document.getElementById('superTotal');
+            const depStatus = document.getElementById('depStatus');
+            const depLabel = document.getElementById('depLabel');
+            const depToggle = document.getElementById('depToggle');
+
+            // ---- dimensions ----
+            const W = 1200,
+                H = 580;
+
+            // ---- CPU layout (3D boxes) ----
+            // Scalar: left half
+            const scalarBox = { x: 40, y: 100, w: 520, h: 340, depth: 50 };
+            // Superscalar: right half
+            const superBox = { x: 640, y: 100, w: 520, h: 340, depth: 50 };
+
+            // Lanes
+            // Scalar: 1 lane (centered)
+            const scalarLaneY = scalarBox.y + 140;
+            // Superscalar: 4 lanes
+            const superLanes = [
+                superBox.y + 50,
+                superBox.y + 120,
+                superBox.y + 190,
+                superBox.y + 260
+            ];
+
+            const LANE_HEIGHT = 48;
+            const INSTR_SIZE = 36;
+
+            // ---- state ----
+            let cycles = 0;
+            let scalarCompleted = 0;
+            let superCompleted = 0;
+            let scalarIPC = 0;
+            let superIPC = 0;
+
+            // Instructions: { x, laneIndex, color, done }
+            let scalarInsts = [];
+            let superInsts = [];
+
+            // Speed (pixels per frame)
+            const SPEED = 2.2;
+
+            // Dispatch interval (ms) = 1 clock cycle
+            const CYCLE_MS = 900;
+
+            // Colors
+            const scalarColor = '#3d8cff';
+            const superColors = ['#ff9f4a', '#ffb347', '#ffc86b', '#ffd98c'];
+
+            // Dependency flag
+            let dependencyOn = false;
+
+            // ---- helpers ----
+            function randomColor() {
+                const hue = Math.floor(Math.random() * 360);
+                return `hsl(${hue}, 80%, 65%)`;
+            }
+
+            // ---- dispatch instructions ----
+            function dispatchCycle() {
+                cycles++;
+
+                // 1. Scalar: always 1 instruction
+                scalarInsts.push({
+                    x: scalarBox.x + 30,
+                    laneIndex: 0,
+                    color: scalarColor,
+                    done: false
+                });
+
+                // 2. Superscalar
+                if (!dependencyOn) {
+                    // Independent: dispatch 4 instructions (one per lane)
+                    for (let i = 0; i < 4; i++) {
+                        superInsts.push({
+                            x: superBox.x + 30,
+                            laneIndex: i,
+                            color: superColors[i % superColors.length],
+                            done: false
+                        });
+                    }
+                } else {
+                    // DEPENDENCY ON: only 1 instruction per cycle (stall)
+                    // Pick a random lane to show it's not full
+                    const lane = Math.floor(Math.random() * 4);
+                    superInsts.push({
+                        x: superBox.x + 30,
+                        laneIndex: lane,
+                        color: '#e07050', // reddish to indicate stalled
+                        done: false
+                    });
+                }
+            }
+
+            // ---- update positions ----
+            function updateInstructions() {
+                // Scalar
+                for (let i = scalarInsts.length - 1; i >= 0; i--) {
+                    const inst = scalarInsts[i];
+                    inst.x += SPEED;
+                    const endX = scalarBox.x + scalarBox.w - 40;
+                    if (inst.x > endX) {
+                        scalarInsts.splice(i, 1);
+                        scalarCompleted++;
+                    }
+                }
+
+                // Superscalar
+                for (let i = superInsts.length - 1; i >= 0; i--) {
+                    const inst = superInsts[i];
+                    inst.x += SPEED;
+                    const endX = superBox.x + superBox.w - 40;
+                    if (inst.x > endX) {
+                        superInsts.splice(i, 1);
+                        superCompleted++;
+                    }
+                }
+            }
+
+            // ---- draw 3D box ----
+            function draw3DBox(ctx, x, y, w, h, depth, color, label) {
+                const dark = '#0f1422';
+                const light = '#2a3555';
+                const mid = '#1c2540';
+
+                // Front face
+                ctx.fillStyle = color;
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.rect(x, y, w, h);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Border
+                ctx.strokeStyle = '#4a5d8a';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(x, y, w, h);
+
+                // Top face (3D depth)
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + depth, y - depth);
+                ctx.lineTo(x + w + depth, y - depth);
+                ctx.lineTo(x + w, y);
+                ctx.fillStyle = light;
+                ctx.fill();
+                ctx.strokeStyle = '#3a4d7a';
+                ctx.stroke();
+
+                // Right face (3D depth)
+                ctx.beginPath();
+                ctx.moveTo(x + w, y);
+                ctx.lineTo(x + w + depth, y - depth);
+                ctx.lineTo(x + w + depth, y + h - depth);
+                ctx.lineTo(x + w, y + h);
+                ctx.fillStyle = dark;
+                ctx.fill();
+                ctx.strokeStyle = '#2a3d6a';
+                ctx.stroke();
+
+                // Inner grid / lanes background
+                ctx.fillStyle = 'rgba(6,10,22,0.5)';
+                ctx.fillRect(x + 10, y + 10, w - 20, h - 20);
+
+                // Label
+                ctx.font = 'bold 18px "Segoe UI", sans-serif';
+                ctx.fillStyle = '#c8daff';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 12;
+                ctx.fillText(label, x + 20, y + 38);
+                ctx.shadowBlur = 0;
+
+                // Lane grooves
+                ctx.strokeStyle = '#2a3a60';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 8]);
+                // Scalar lanes
+                if (label === 'SCALAR') {
+                    const ly = y + 120;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 20, ly);
+                    ctx.lineTo(x + w - 20, ly);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + 20, ly + LANE_HEIGHT);
+                    ctx.lineTo(x + w - 20, ly + LANE_HEIGHT);
+                    ctx.stroke();
+                    // arrow
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#4a6a9a';
+                    ctx.font = '14px sans-serif';
+                    ctx.fillText('⬤ 1 pipeline', x + 30, ly - 10);
+                }
+                if (label === 'SUPERSCALAR') {
+                    for (let i = 0; i < 4; i++) {
+                        const ly = y + 40 + i * 70;
+                        ctx.beginPath();
+                        ctx.moveTo(x + 20, ly);
+                        ctx.lineTo(x + w - 20, ly);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(x + 20, ly + LANE_HEIGHT);
+                        ctx.lineTo(x + w - 20, ly + LANE_HEIGHT);
+                        ctx.stroke();
+                    }
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#4a6a9a';
+                    ctx.font = '14px sans-serif';
+                    ctx.fillText('⬤ 4 pipelines (ALU, FPU, LSU, BRU)', x + 30, y + 30);
+                }
+                ctx.setLineDash([]);
+
+                // "Instructions" label at entry
+                ctx.fillStyle = '#6a8abc';
+                ctx.font = '13px sans-serif';
+                ctx.fillText('FETCH →', x + 12, y + h - 16);
+                ctx.fillText('→ RETIRE', x + w - 90, y + h - 16);
+            }
+
+            // ---- draw instruction (3D cube) ----
+            function drawInstruction(ctx, x, y, color, size) {
+                const s = size || INSTR_SIZE;
+                const half = s / 2;
+
+                // Glow
+                const grad = ctx.createRadialGradient(x, y + 4, 2, x, y + 4, s * 0.9);
+                grad.addColorStop(0, color);
+                grad.addColorStop(0.7, color);
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 25;
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(x, y + 4, s * 0.9, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Main cube (with 3D top/right faces)
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+
+                // Front face
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.roundRect(x - half, y - half, s, s, 6);
+                ctx.fill();
+
+                // Top face (3D)
+                ctx.fillStyle = '#ffffff30';
+                ctx.beginPath();
+                ctx.moveTo(x - half, y - half);
+                ctx.lineTo(x - half + 10, y - half - 10);
+                ctx.lineTo(x + half + 10, y - half - 10);
+                ctx.lineTo(x + half, y - half);
+                ctx.fill();
+
+                // Right face (3D)
+                ctx.fillStyle = '#00000030';
+                ctx.beginPath();
+                ctx.moveTo(x + half, y - half);
+                ctx.lineTo(x + half + 10, y - half - 10);
+                ctx.lineTo(x + half + 10, y + half - 10);
+                ctx.lineTo(x + half, y + half);
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = '#ffffff60';
+                ctx.lineWidth = 1.2;
+                ctx.strokeRect(x - half, y - half, s, s);
+
+                // Small "I" label
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('I', x, y + 1);
+
+                // Reset shadow
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
+            }
+
+            // ---- roundRect polyfill for canvas ----
+            if (!CanvasRenderingContext2D.prototype.roundRect) {
+                CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                    if (r > w / 2) r = w / 2;
+                    if (r > h / 2) r = h / 2;
+                    this.moveTo(x + r, y);
+                    this.lineTo(x + w - r, y);
+                    this.quadraticCurveTo(x + w, y, x + w, y + r);
+                    this.lineTo(x + w, y + h - r);
+                    this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                    this.lineTo(x + r, y + h);
+                    this.quadraticCurveTo(x, y + h, x, y + h - r);
+                    this.lineTo(x, y + r);
+                    this.quadraticCurveTo(x, y, x + r, y);
+                    return this;
+                };
+            }
+
+            // ---- main draw ----
+            function draw() {
+                ctx.clearRect(0, 0, W, H);
+
+                // ---- background grid (3D depth) ----
+                ctx.fillStyle = '#090c16';
+                ctx.fillRect(0, 0, W, H);
+
+                // subtle grid
+                ctx.strokeStyle = '#1a2340';
+                ctx.lineWidth = 0.8;
+                for (let i = 0; i < W; i += 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i, H);
+                    ctx.stroke();
+                }
+                for (let i = 0; i < H; i += 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(W, i);
+                    ctx.stroke();
+                }
+
+                // ---- Draw 3D boxes ----
+                draw3DBox(ctx, scalarBox.x, scalarBox.y, scalarBox.w, scalarBox.h, scalarBox.depth, '#16203a', 'SCALAR');
+                draw3DBox(ctx, superBox.x, superBox.y, superBox.w, superBox.h, superBox.depth, '#1f2a44', 'SUPERSCALAR');
+
+                // ---- Draw scalar instructions ----
+                for (const inst of scalarInsts) {
+                    const laneY = scalarLaneY + LANE_HEIGHT / 2;
+                    drawInstruction(ctx, inst.x, laneY, inst.color, INSTR_SIZE);
+                }
+
+                // ---- Draw superscalar instructions ----
+                for (const inst of superInsts) {
+                    const laneY = superLanes[inst.laneIndex] + LANE_HEIGHT / 2;
+                    drawInstruction(ctx, inst.x, laneY, inst.color, INSTR_SIZE);
+                }
+
+                // ---- Draw lane markers (entry/exit) ----
+                // Scalar entry/exit arrows
+                ctx.fillStyle = '#4a6a9a';
+                ctx.font = '24px sans-serif';
+                ctx.fillText('⏩', scalarBox.x - 10, scalarLaneY + LANE_HEIGHT / 2 + 8);
+                ctx.fillText('⏪', scalarBox.x + scalarBox.w - 30, scalarLaneY + LANE_HEIGHT / 2 + 8);
+                // Super entry/exit
+                for (let i = 0; i < 4; i++) {
+                    const ly = superLanes[i] + LANE_HEIGHT / 2;
+                    ctx.fillText('⏩', superBox.x - 10, ly + 8);
+                    ctx.fillText('⏪', superBox.x + superBox.w - 30, ly + 8);
+                }
+
+                // ---- Dependency overlay if stalled ----
+                if (dependencyOn) {
+                    ctx.fillStyle = 'rgba(200, 60, 40, 0.08)';
+                    ctx.fillRect(superBox.x, superBox.y, superBox.w, superBox.h);
+                    ctx.fillStyle = '#ff7a5a';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.shadowColor = '#ff3a1a';
+                    ctx.shadowBlur = 30;
+                    ctx.fillText('⛔ STALLED · waiting for dependency', superBox.x + superBox.w / 2, superBox.y + superBox.h -
+                    18);
+                    ctx.shadowBlur = 0;
+                    ctx.textAlign = 'left';
+                }
+
+                // ---- Stats update ----
+                const scalarRate = cycles > 0 ? (scalarCompleted / cycles) : 0;
+                const superRate = cycles > 0 ? (superCompleted / cycles) : 0;
+                scalarIPC = scalarRate;
+                superIPC = superRate;
+
+                cycleSpan.textContent = cycles;
+                scalarTotalSpan.textContent = scalarCompleted;
+                superTotalSpan.textContent = superCompleted;
+                scalarIPCSpan.textContent = scalarRate.toFixed(2);
+                superIPCSpan.textContent = superRate.toFixed(2);
+
+                // Update dependency status
+                if (dependencyOn) {
+                    depStatus.textContent = '⛔ STALL (IPC ↓)';
+                    depStatus.className = 'dep-status stalled';
+                    depLabel.textContent = '🔗 dependency active';
+                } else {
+                    depStatus.textContent = '✓ NO STALL (4 IPC)';
+                    depStatus.className = 'dep-status';
+                    depLabel.textContent = '📦 independent';
+                }
+
+                // ---- Legend ----
+                ctx.fillStyle = '#5a7aaa';
+                ctx.font = '12px sans-serif';
+                ctx.fillText('⚡ 1 instruction per cycle', scalarBox.x + 20, scalarBox.y + scalarBox.h + 24);
+                ctx.fillText('⚡ up to 4 instructions per cycle', superBox.x + 20, superBox.y + superBox.h + 24);
+                if (dependencyOn) {
+                    ctx.fillStyle = '#ff7a5a';
+                    ctx.fillText('⚠️ dependencies force 1 IPC — superscalar loses advantage', superBox.x + 20, superBox.y +
+                        superBox.h + 46);
+                } else {
+                    ctx.fillStyle = '#5a7aaa';
+                    ctx.fillText('✅ all instructions independent — full parallel throughput', superBox.x + 20, superBox.y +
+                        superBox.h + 46);
+                }
+            }
+
+            // ---- game loop ----
+            function loop() {
+                updateInstructions();
+                draw();
+                requestAnimationFrame(loop);
+            }
+
+            // ---- clock tick ----
+            let tickTimer = null;
+
+            function startClock() {
+                if (tickTimer) clearInterval(tickTimer);
+                tickTimer = setInterval(() => {
+                    dispatchCycle();
+                }, CYCLE_MS);
+            }
+
+            // ---- reset / restart ----
+            function resetSim() {
+                scalarInsts = [];
+                superInsts = [];
+                cycles = 0;
+                scalarCompleted = 0;
+                superCompleted = 0;
+                if (tickTimer) {
+                    clearInterval(tickTimer);
+                    tickTimer = null;
+                }
+                // dispatch a few cycles to get started
+                for (let i = 0; i < 3; i++) dispatchCycle();
+                startClock();
+            }
+
+            // ---- toggle dependency ----
+            depToggle.addEventListener('change', function() {
+                dependencyOn = this.checked;
+                // Clear existing instructions to avoid visual clutter
+                scalarInsts = [];
+                superInsts = [];
+                // Reset stats but keep cycles? Better to reset completely for clarity.
+                cycles = 0;
+                scalarCompleted = 0;
+                superCompleted = 0;
+                if (tickTimer) {
+                    clearInterval(tickTimer);
+                    tickTimer = null;
+                }
+                // dispatch fresh
+                for (let i = 0; i < 3; i++) dispatchCycle();
+                startClock();
+            });
+
+            // ---- init ----
+            resetSim();
+            requestAnimationFrame(loop);
+
+            // ---- resize canvas (maintain aspect) ----
+            function resizeCanvas() {
+                const wrap = canvas.parentElement;
+                const rect = wrap.getBoundingClientRect();
+                // canvas is 1200x580, we keep aspect via CSS
+            }
+            window.addEventListener('resize', resizeCanvas);
+
+            // ---- hotkey ----
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'd' || e.key === 'D') {
+                    depToggle.checked = !depToggle.checked;
+                    depToggle.dispatchEvent(new Event('change'));
+                    e.preventDefault();
+                }
+            });
+
+            console.log('✅ Scalar vs Superscalar 3D demo running.');
+            console.log('💡 Press [D] to toggle dependency stall.');
+        })();
+    </script>
+</body>
+</html>
