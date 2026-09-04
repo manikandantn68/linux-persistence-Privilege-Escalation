@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Polling - 3D Interactive Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #eee;
+            padding: 20px 25px;
+            border-radius: 12px;
+            border-left: 6px solid #ffaa00;
+            max-width: 320px;
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+        }
+        #info-panel h1 {
+            margin: 0 0 6px 0;
+            font-size: 22px;
+            color: #ffaa00;
+            letter-spacing: 1px;
+        }
+        #info-panel .sub {
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+        #info-panel .step {
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #info-panel .step .icon {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #555;
+            flex-shrink: 0;
+        }
+        #info-panel .step.active .icon {
+            background: #ffaa00;
+            box-shadow: 0 0 10px #ffaa00;
+        }
+        #info-panel .step.done .icon {
+            background: #00cc88;
+        }
+        #status-log {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            right: 30px;
+            max-width: 600px;
+            background: rgba(10, 10, 20, 0.9);
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            height: 100px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+        #status-log .log-entry {
+            opacity: 0.8;
+            margin: 2px 0;
+            border-bottom: 1px solid #1a1a2a;
+            padding: 2px 0;
+        }
+        #status-log .log-entry.highlight {
+            color: #ffaa00;
+            opacity: 1;
+            font-weight: bold;
+        }
+        #status-log .log-entry.data {
+            color: #00ccff;
+            opacity: 1;
+            font-weight: bold;
+        }
+        #controls {
+            position: absolute;
+            bottom: 160px;
+            right: 40px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        .btn {
+            background: #1e2a3a;
+            border: none;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+            border: 1px solid #3a4a5a;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            background: #2a3a4a;
+            border-color: #ffaa00;
+            box-shadow: 0 0 25px rgba(255, 170, 0, 0.3);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-primary {
+            background: #ffaa00;
+            color: #111;
+            border-color: #ffaa00;
+        }
+        .btn-primary:hover {
+            background: #ffbb22;
+            border-color: #ffcc44;
+        }
+        .btn-secondary {
+            background: #2a3a4a;
+            border-color: #5a6a7a;
+        }
+        .badge {
+            background: #ff3355;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            margin-left: 5px;
+        }
+        #tooltip-3d {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            color: #888;
+            font-size: 12px;
+            background: rgba(0,0,0,0.5);
+            padding: 6px 12px;
+            border-radius: 20px;
+            z-index: 5;
+            pointer-events: none;
+        }
+        /* scrollbar style */
+        #status-log::-webkit-scrollbar {
+            width: 6px;
+        }
+        #status-log::-webkit-scrollbar-track {
+            background: #111;
+        }
+        #status-log::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+        @media (max-width: 700px) {
+            #info-panel { max-width: 200px; padding: 12px; top: 10px; left: 10px; }
+            #info-panel h1 { font-size: 16px; }
+            #controls { bottom: 180px; right: 20px; }
+            .btn { padding: 10px 18px; font-size: 14px; }
+            #status-log { height: 80px; font-size: 12px; left: 10px; right: 10px; bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- UI Overlay -->
+    <div id="info-panel">
+        <h1>⚡ CPU Polling</h1>
+        <div class="sub">CPU actively checks device status</div>
+        <div id="step-list">
+            <div class="step" id="step1"><span class="icon"></span> 1. CPU reads Status Register</div>
+            <div class="step" id="step2"><span class="icon"></span> 2. Is device ready? (BUSY / READY)</div>
+            <div class="step" id="step3"><span class="icon"></span> 3. If BUSY → Loop & Check Again</div>
+            <div class="step" id="step4"><span class="icon"></span> 4. If READY → Transfer Data</div>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:#aaa; border-top:1px solid #333; padding-top:8px;">
+            <span id="poll-counter">Poll #0</span> | <span id="status-text">Status: BUSY</span>
+        </div>
+    </div>
+
+    <div id="status-log">
+        <div class="log-entry">🔄 System initialized. Waiting for polling...</div>
+    </div>
+
+    <div id="controls">
+        <button class="btn btn-primary" id="btn-ready">⌨️ Make Device READY</button>
+        <button class="btn btn-secondary" id="btn-reset">⟲ Reset Simulation</button>
+    </div>
+    <div id="tooltip-3d">🖱️ Drag to rotate · Scroll to zoom</div>
+
+    <!-- Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- DOM refs ---
+        const logContainer = document.getElementById('status-log');
+        const pollCounterSpan = document.getElementById('poll-counter');
+        const statusTextSpan = document.getElementById('status-text');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+
+        // --- Simulation state ---
+        let isDeviceReady = false;
+        let pollCount = 0;
+        let isPollingActive = true;
+        let isTransferring = false;
+        let transferTimer = null;
+
+        // --- 3D Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5, 3, 8);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.target.set(0, 0.5, 0);
+        controls.update();
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.5);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x4488ff, 0.5);
+        fillLight.position.set(-5, 0, 5);
+        scene.add(fillLight);
+
+        const backLight = new THREE.PointLight(0x4466ff, 0.3);
+        backLight.position.set(0, 2, -5);
+        scene.add(backLight);
+
+        // Ground grid
+        const gridHelper = new THREE.GridHelper(10, 20, 0x4466aa, 0x223366);
+        gridHelper.position.y = -0.5;
+        scene.add(gridHelper);
+
+        // --- Build CPU ---
+        const cpuGroup = new THREE.Group();
+        cpuGroup.position.set(-2.5, 0.5, 0);
+
+        const cpuBox = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 1.2, 1.2),
+            new THREE.MeshStandardMaterial({ color: 0x3388ff, emissive: 0x113366, roughness: 0.3, metalness: 0.7 })
+        );
+        cpuBox.castShadow = true;
+        cpuGroup.add(cpuBox);
+
+        // CPU glow ring
+        const ringGeo = new THREE.TorusGeometry(0.9, 0.03, 16, 32);
+        const ringMat = new THREE.MeshStandardMaterial({ color: 0x88ddff, emissive: 0x4488ff });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.6;
+        cpuGroup.add(ring);
+        
+        const ring2 = ring.clone();
+        ring2.rotation.x = 0;
+        ring2.rotation.z = Math.PI / 2;
+        ring2.position.y = 0;
+        cpuGroup.add(ring2);
+
+        // CPU label (small sphere core)
+        const coreGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(0.15, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0x88ddff })
+        );
+        coreGlow.position.y = 0.2;
+        cpuGroup.add(coreGlow);
+
+        scene.add(cpuGroup);
+
+        // --- Build Device (Keyboard / Disk) ---
+        const deviceGroup = new THREE.Group();
+        deviceGroup.position.set(2.5, 0.5, 0);
+
+        const deviceBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.9, 0.9, 0.3, 32),
+            new THREE.MeshStandardMaterial({ color: 0x445566, roughness: 0.6, metalness: 0.4 })
+        );
+        deviceBase.castShadow = true;
+        deviceGroup.add(deviceBase);
+
+        const deviceTop = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.7, 0.7, 0.15, 32),
+            new THREE.MeshStandardMaterial({ color: 0x667788, roughness: 0.5, metalness: 0.3 })
+        );
+        deviceTop.position.y = 0.2;
+        deviceGroup.add(deviceTop);
+
+        // LED indicator on device
+        const ledMat = new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0xaa0000 });
+        const led = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), ledMat);
+        led.position.set(0.4, 0.35, 0.4);
+        deviceGroup.add(led);
+        const ledGlow = led.clone();
+        ledGlow.scale.set(1.8, 1.8, 1.8);
+        ledGlow.material = new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0.3 });
+        deviceGroup.add(ledGlow);
+
+        scene.add(deviceGroup);
+
+        // --- Status Register Panel (Floating above device) ---
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        const panelMat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+        const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), panelMat);
+        panel.position.set(2.5, 1.8, 0);
+        scene.add(panel);
+
+        function updateStatusPanel(status, data) {
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, 256, 128);
+            // Border
+            ctx.strokeStyle = '#4488ff';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(4, 4, 248, 120);
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            if (status === 'BUSY') {
+                ctx.fillStyle = '#ff5544';
+                ctx.font = 'bold 32px monospace';
+                ctx.fillText('⏳ BUSY', 128, 45);
+                ctx.fillStyle = '#aaa';
+                ctx.font = '16px monospace';
+                ctx.fillText('Status Register', 128, 90);
+            } else if (status === 'READY') {
+                ctx.fillStyle = '#44ff88';
+                ctx.font = 'bold 32px monospace';
+                ctx.fillText('✅ READY', 128, 45);
+                ctx.fillStyle = '#aaa';
+                ctx.font = '16px monospace';
+                ctx.fillText('Status Register', 128, 90);
+            } else if (status === 'TRANSFER') {
+                ctx.fillStyle = '#44ddff';
+                ctx.font = 'bold 28px monospace';
+                ctx.fillText('📤 DATA XFER', 128, 45);
+                ctx.fillStyle = '#88ccff';
+                ctx.font = '16px monospace';
+                ctx.fillText('Transferring...', 128, 90);
+            }
+            texture.needsUpdate = true;
+        }
+        updateStatusPanel('BUSY', null);
+
+        // --- Polling Beam (visual ray) ---
+        const beamGroup = new THREE.Group();
+        scene.add(beamGroup);
+
+        // The moving ball representing the "check"
+        const ballMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0xff6600 });
+        const pollBall = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), ballMat);
+        pollBall.position.set(-1, 0.5, 0);
+        beamGroup.add(pollBall);
+
+        // Trail line
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.4 });
+        const points = [new THREE.Vector3(-2.5, 0.5, 0), new THREE.Vector3(2.5, 0.5, 0)];
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(lineGeo, lineMat);
+        beamGroup.add(line);
+
+        // --- Data transfer particles (when ready) ---
+        const particleGroup = new THREE.Group();
+        scene.add(particleGroup);
+        const particles = [];
+        for (let i = 0; i < 15; i++) {
+            const pMat = new THREE.MeshBasicMaterial({ color: 0x44ddff });
+            const pMesh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), pMat);
+            pMesh.visible = false;
+            particleGroup.add(pMesh);
+            particles.push({
+                mesh: pMesh,
+                progress: Math.random(),
+                speed: 0.01 + Math.random() * 0.02
+            });
+        }
+
+        // --- Core Logic ---
+
+        function addLog(message, type = 'normal') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            // keep last 50 entries
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        function setStep(stepId) {
+            const steps = ['step1', 'step2', 'step3', 'step4'];
+            steps.forEach(id => {
+                const el = document.getElementById(id);
+                if (id === stepId) {
+                    el.className = 'step active';
+                } else {
+                    el.className = 'step';
+                }
+            });
+        }
+
+        function updateUI(status, pollNum) {
+            pollCounterSpan.textContent = `Poll #${pollNum}`;
+            statusTextSpan.textContent = `Status: ${status}`;
+            if (status === 'BUSY') {
+                updateStatusPanel('BUSY');
+                document.getElementById('step2').querySelector('.icon').style.background = '#ff5544';
+            } else if (status === 'READY') {
+                updateStatusPanel('READY');
+                document.getElementById('step2').querySelector('.icon').style.background = '#44ff88';
+            } else if (status === 'TRANSFER') {
+                updateStatusPanel('TRANSFER');
+            }
+        }
+
+        // Polling action
+        function performPoll() {
+            if (!isPollingActive || isTransferring) return;
+
+            pollCount++;
+            setStep('step1');
+            updateUI('BUSY', pollCount);
+            addLog(`🔄 Poll #${pollCount}: Reading Status Register...`, 'normal');
+
+            // Animate ball going to device
+            animateBall(2.5, () => {
+                // Check status
+                if (isDeviceReady) {
+                    // READY!
+                    setStep('step2');
+                    updateUI('READY', pollCount);
+                    addLog(`✅ Poll #${pollCount}: Status = READY! Initiating Data Transfer...`, 'highlight');
+                    setStep('step4');
+                    startDataTransfer();
+                } else {
+                    // BUSY
+                    setStep('step2');
+                    updateUI('BUSY', pollCount);
+                    addLog(`⏳ Poll #${pollCount}: Status = BUSY. Checking again...`, 'normal');
+                    setStep('step3');
+                    // Animate ball back
+                    animateBall(-2.5, () => {
+                        // Ready for next poll
+                    });
+                }
+            });
+        }
+
+        let isBallAnimating = false;
+        let ballQueue = [];
+
+        function animateBall(targetX, callback) {
+            if (isBallAnimating) {
+                ballQueue.push({ targetX, callback });
+                return;
+            }
+            isBallAnimating = true;
+            const startX = pollBall.position.x;
+            const startTime = performance.now();
+            const duration = 300; // ms
+
+            function step(time) {
+                const elapsed = time - startTime;
+                let progress = Math.min(elapsed / duration, 1);
+                // ease in-out
+                progress = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                const currentX = startX + (targetX - startX) * progress;
+                pollBall.position.x = currentX;
+                // Update line visibility
+                line.visible = true;
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    pollBall.position.x = targetX;
+                    isBallAnimating = false;
+                    if (callback) callback();
+                    // process queue
+                    if (ballQueue.length > 0) {
+                        const next = ballQueue.shift();
+                        animateBall(next.targetX, next.callback);
+                    } else {
+                        // hide line after a moment
+                        setTimeout(() => { line.visible = false; }, 200);
+                    }
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function startDataTransfer() {
+            isTransferring = true;
+            updateUI('TRANSFER', pollCount);
+            // Show particles
+            particles.forEach((p, idx) => {
+                p.mesh.visible = true;
+                p.progress = 0;
+                const angle = (idx / particles.length) * Math.PI * 2;
+                const radius = 0.2;
+                p.mesh.position.set(
+                    2.5 + Math.cos(angle) * radius,
+                    0.5 + Math.sin(angle) * radius * 0.5,
+                    Math.sin(angle) * radius * 0.5
+                );
+            });
+
+            let transferProgress = 0;
+            const transferInterval = setInterval(() => {
+                transferProgress += 0.025;
+                if (transferProgress >= 1) {
+                    clearInterval(transferInterval);
+                    // Finish transfer
+                    addLog(`📦 Data transferred successfully! Resetting device.`, 'data');
+                    isDeviceReady = false;
+                    isTransferring = false;
+                    particles.forEach(p => p.mesh.visible = false);
+                    updateUI('BUSY', pollCount);
+                    // reset LED
+                    led.material.color.setHex(0xff3333);
+                    ledGlow.material.color.setHex(0xff3333);
+                    // reset step
+                    setStep('step1');
+                    // auto start next poll after short delay
+                    setTimeout(() => {
+                        if (isPollingActive) performPoll();
+                    }, 500);
+                    return;
+                }
+                // Move particles from device to CPU
+                particles.forEach((p) => {
+                    p.progress = Math.min(p.progress + p.speed * 0.5, 1);
+                    const from = new THREE.Vector3(2.5, 0.5, 0);
+                    const to = new THREE.Vector3(-2.5, 0.5, 0);
+                    const current = from.clone().lerp(to, p.progress);
+                    // add some random offset
+                    current.x += (Math.random() - 0.5) * 0.1;
+                    current.y += (Math.random() - 0.5) * 0.1;
+                    current.z += (Math.random() - 0.5) * 0.1;
+                    p.mesh.position.copy(current);
+                });
+            }, 50);
+        }
+
+        // --- Event Handlers ---
+        document.getElementById('btn-ready').addEventListener('click', () => {
+            if (!isDeviceReady && !isTransferring) {
+                isDeviceReady = true;
+                led.material.color.setHex(0x44ff88);
+                ledGlow.material.color.setHex(0x44ff88);
+                addLog(`💡 Device set to READY!`, 'highlight');
+                // If currently polling, the next poll will catch it.
+                // If idle, force a poll
+                if (!isPollingActive) {
+                    isPollingActive = true;
+                    performPoll();
+                }
+            } else {
+                addLog(`⛔ Device is already READY or Transferring.`, 'normal');
+            }
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            // Reset everything
+            isDeviceReady = false;
+            isTransferring = false;
+            isPollingActive = true;
+            pollCount = 0;
+            if (transferTimer) clearTimeout(transferTimer);
+            particles.forEach(p => p.mesh.visible = false);
+            led.material.color.setHex(0xff3333);
+            ledGlow.material.color.setHex(0xff3333);
+            pollBall.position.x = -2.5;
+            line.visible = false;
+            updateUI('BUSY', 0);
+            setStep('step1');
+            logContainer.innerHTML = '<div class="log-entry">🔄 Reset. Waiting for polling...</div>';
+            addLog(`🔄 System reset.`);
+            // Start polling loop fresh
+            if (window.pollInterval) clearInterval(window.pollInterval);
+            window.pollInterval = setInterval(performPoll, 1500);
+            // Force first poll after a short delay
+            setTimeout(performPoll, 300);
+        });
+
+        // --- Start the simulation ---
+        addLog(`🚀 Starting Polling Simulation. Click "Make Device READY" to simulate key press.`);
+        setStep('step1');
+        updateUI('BUSY', 0);
+
+        // Poll every 1.5 seconds
+        window.pollInterval = setInterval(performPoll, 1500);
+        // Initial poll after 500ms
+        setTimeout(performPoll, 500);
+
+        // --- Animation loop ---
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            // CPU glow pulse
+            cpuBox.material.emissiveIntensity = 0.3 + Math.sin(time * 2) * 0.1;
+            ring.material.emissiveIntensity = 0.5 + Math.sin(time * 3) * 0.2;
+            ring2.material.emissiveIntensity = 0.5 + Math.cos(time * 3 + 1) * 0.2;
+            coreGlow.material.color.setHSL(0.6 + Math.sin(time * 0.5) * 0.05, 0.8, 0.6);
+
+            // Device LED pulse
+            if (!isDeviceReady && !isTransferring) {
+                led.material.emissiveIntensity = 0.3 + Math.sin(time * 4) * 0.2;
+            }
+
+            // Rotate CPU ring
+            ring.rotation.z = time * 0.5;
+            ring2.rotation.y = time * 0.7;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- Resize handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Cleanup interval on page unload
+        window.addEventListener('beforeunload', () => {
+            if (window.pollInterval) clearInterval(window.pollInterval);
+        });
+
+        console.log('CPU Polling 3D Simulation started!');
+    </script>
+</body>
+</html>
