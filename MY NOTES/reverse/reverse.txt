@@ -1,0 +1,1181 @@
+========================================
+--------------------
+unpackme
+------------------ 
+
+file unpackme-upx   
+chmod +x unpackme-upx 
+ ltrace ./unpackme-upx 
+strace ./unpackme-upx 
+strings  ./unpackme-upx 
+upx -d  ./unpackme-upx 
+
+--
+r2 -w unpackme-upx  
+aaa
+pdf @main
+
+check  the cmp instruction 
+0x00401aa7      e8d4340000     call sym.__isoc99_scanf     ; int scanf(const char *format)
+│           0x00401aac      8b45c4         mov eax, dword [var_3ch]
+│           0x00401aaf      3dcb830b00     cmp eax, 0xb83cb
+
+ python3
+
+paste 0xb83cb
+
+answer: 754635
+
+
+--
+============================
+
+
+===================
+me
+rev50_linux64-bit
+================
+
+step 1: open ghidra 
+step 2: create newfile 
+step 3: import file -> rev50_linux64-bit
+step 4: look at left side "symbol tree" -> filter type : main 
+step 5: click main function look at right side -> decompile main 
+
+step 6: strlen() is a C standard library function that returns the length of a string, excluding the terminating null character ('\0').
+
+  see:
+  if (param_1 == 2) {
+    sVar1 = strlen((char *)param_2[1]);
+    if (sVar1 == 10) {
+      if (*(char *)(param_2[1] + 4) == '@') {
+        puts("Nice Job!!");
+        printf("flag{%s}\n",param_2[1]);
+      }
+      else {
+        usage(*param_2);
+      }
+
+
+sVar1 == 10
+ if (*(char *)(param_2[1] + 4) == '@') {
+
+
+step 7: 0123@56789 
+
+┌──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./rev50_linux64-bit 0123@56789 
+Nice Job!!
+flag{0123@56789}
+                    
+
+
+
+
+===============
+
+
+
+=================================
+nasm_crack
+
+
+step 1: open program into ghidra codebrowser
+step 2: view via entry() function 
+step 3: view decompile code
+step 4: view throughput assembly 
+
+        0040105c 0f 05           SYSCALL
+        0040105e 48 bf 26        MOV        RDI,passwd                                       = 73h
+                 20 40 00 
+                 00 00 00 00
+        00401068 48 be 31        MOV        RSI,input
+                 20 40 00 
+                 00 00 00 00
+        00401072 b9 0b 00        MOV        ECX,0xb
+                 00 00
+        00401077 f3 a6           CMPSB.REPE RDI=>passwd,RSI=>input                           = 73h
+                                                                                             = 75h
+
+CMPSB (Compare String Byte) is an x86 assembly instruction used to compare bytes from two memory locations.
+
+step 5: decompile  side -> pcVar3 = &passwd;
+step 6: double click the password -> pcVar3 = &"passwd";
+        0040105e 48 bf 26        MOV        RDI,passwd                                       = 73h
+                 20 40 00 
+                 00 00 00 00
+step 7:    RDI,passwd    double click the password 
+step  8:change data type char "   undefined1 73h"
+
+                             passwd                                          XREF[2]:     entry:0040105e(*), 
+                                                                                          entry:00401077(R)  
+        00402026 73              undefined1 73h
+
+
+
+or else
+
+change whole
+
+step 9: 
+
+                             passwd                                          XREF[2]:     entry:0040105e(*), 
+                                                                                          entry:00401077(R)  
+        00402026 73              undefined1 73h
+                             DAT_00402027                                    XREF[1]:     entry:00401077(R)  
+        00402027 75              undefined1 75h
+        00402028 70              ??         70h    p
+        00402029 65              ??         65h    e
+        0040202a 72              ??         72h    r
+        0040202b 73              ??         73h    s
+        0040202c 65              ??         65h    e
+        0040202d 63              ??         63h    c
+        0040202e 72              ??         72h    r
+        0040202f 65              ??         65h    e
+        00402030 74              ??         74h    t
+
+
+
+select these then  mark  then right click select area "see the data change char data type"
+
+
+step 10: supersecret
+
+                                                                                                                                                                                                                                           
+┌──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./nasm_crack
+Enter your password: supersecret
+Correct!
+
+====================================
+
+
+====================================
+hello
+step 1:pwndbg ./hello
+step 2:pwndbg> b *0x401080
+step 3:pwndbg> run
+
+Please enter your name: a
+
+Execute Python inside pwndbg
+
+step 4:
+-
+python
+import gdb
+
+raw = bytes(gdb.selected_inferior().read_memory(0x40209a, 8))
+
+name = raw.split(b"\n", 1)[0].split(b"\x00", 1)[0]
+
+password = bytes((c + 5) & 0xff for c in name)
+
+print("[+] Name:", name.decode("latin-1"))
+print("[+] PASSWORD:", password.decode("latin-1"))
+end
+
+-
+
+Continue execution
+
+step 5: pwndbg> continue
+
+step 6: 
+Expected output for name a
+[+] Name: a
+[+] PASSWORD: f
+====================================
+
+
+
+=====================
+pwndbg ./crack 
+
+b main
+r
+
+n until you find this 
+
+─────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────
+00:0000│ rsp     0x7fffffffddd0 ◂— 0x40 /* '@' */
+01:0008│-010     0x7fffffffddd8 ◂— 0
+02:0010│-008     0x7fffffffdde0 ◂— '00sGo4M0enter thenter the right password'
+03:0018│ rsi rbp 0x7fffffffdde8 ◂— 'enter thenter the right password'
+04:0020│+008     0x7fffffffddf0 ◂— 'enter the right password'
+05:0028│+010     0x7fffffffddf8 ◂— 'e right password'
+06:0030│+018     0x7fffffffde00 ◂— 'password'
+07:0038│+020     0x7fffffffde08 ◂— 0
+─────────────────────────────────────────
+
+┌──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./crack
+enter the right password
+00sGo4M0
+good kitty!
+
+
+============================================
+
+
+============================================
+easy keyg3nme
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: decompile 
+
+undefined8 main(void)
+
+{
+  int iVar1;
+  long in_FS_OFFSET;
+  undefined4 local_14;
+  long local_10;
+  
+  local_10 = *(long *)(in_FS_OFFSET + 0x28);
+  printf("Enter your key:  ");
+  __isoc99_scanf(&DAT_0010201a,&local_14);
+  iVar1 = validate_key(local_14);
+  if (iVar1 == 1) {
+    puts("Good job mate, now go keygen me.");
+  }
+  else {
+    puts("nope.");
+  }
+  if (local_10 != *(long *)(in_FS_OFFSET + 0x28)) {
+                    /* WARNING: Subroutine does not return */
+    __stack_chk_fail();
+  }
+  return 0;
+}
+
+step 4: double click into -> validate_key
+step 5:return param_1 % 0x4c7 == 0;   "0x4c7  hover right clock place"
+you decimal value 1223
+============================================
+
+============================================
+babyrev
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+
+undefined8 main(void)
+
+{
+  int iVar1;
+  long in_FS_OFFSET;
+  int local_40;
+  uint local_3c;
+  char local_38 [40];
+  long local_10;
+  
+  local_10 = *(long *)(in_FS_OFFSET + 0x28);
+  puts("Welcome to baby rev challenge\nInput the password:\n");
+  fgets(local_38,0x20,stdin);
+  puts("Input the secret code now:\n");
+  __isoc99_scanf("%d",&local_40);
+  if (local_40 == 0x539) {
+    iVar1 = strcmp(local_38,"Sup3rS3cr3tP455W0rd\n");
+    if (iVar1 == 0) {
+      puts("Correct!\nHere is your flag\n");
+      for (local_3c = 0; local_3c < 0x1b; local_3c = local_3c + 1) {
+        putchar((int)(char)((char)local_3c + 0x69U ^
+                           (byte)*(undefined4 *)(flag + (long)(int)local_3c * 4)));
+      }
+    }
+    else {
+      puts("Wrong password!");
+    }
+  }
+  else {
+    puts("Wrong code!");
+  }
+  if (local_10 == *(long *)(in_FS_OFFSET + 0x28)) {
+    return 0;
+  }
+                    /* WARNING: Subroutine does not return */
+  __stack_chk_fail();
+}
+
+
+step 4: look at  strcmp(local_38,"Sup3rS3cr3tP455W0rd\n");  " password: Sup3rS3cr3tP455W0rd "
+
+step 5: look at  and just hover place 0x539 (local_40 == 0x539) decimal value : 1337
+============================================
+
+============================================
+simp-password
+
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+
+undefined8 main(void)
+
+{
+  int iVar1;
+  long in_FS_OFFSET;
+  char local_48 [56];
+  long local_10;
+  
+  local_10 = *(long *)(in_FS_OFFSET + 0x28);
+  printf("Enter password: ");
+  __isoc99_scanf("%41s",local_48);
+  iVar1 = strcmp(local_48,"iloveicecream");
+  if (iVar1 == 0) {
+    puts("I love ice cream too!");
+  }
+  else {
+    puts("Wrong try again.");
+  }
+  if (local_10 != *(long *)(in_FS_OFFSET + 0x28)) {
+                    /* WARNING: Subroutine does not return */
+    __stack_chk_fail();
+  }
+  return 0;
+}
+
+step 4:  strcmp(local_48,"iloveicecream");  -> "iloveicecream"
+
+
+
+┌──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./simp-password
+Enter password: iloveicecream
+I love ice cream too!
+                     
+
+============================================
+
+============================================
+pass
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+undefined8 main(void)
+
+{
+  int iVar1;
+  char *__nptr;
+  
+  __nptr = (char *)GetPass();
+  iVar1 = atoi(__nptr);
+  if (iVar1 == -0x2023e3c2) {
+    printf("Password Correct!!!");
+  }
+  else {
+    printf("Incorrect Password!!!");
+  }
+  return 0;
+}
+
+
+ step 4: (iVar1 == -0x2023e3c2) just hover value :  -0x2023e3c2 see decimal value: 3755744318
+
+┌──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./pass
+input your password here: 3755744318
+Password Correct!!!    
+
+============================================
+
+============================================
+crack2
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+
+void main(void)
+
+{
+  int iVar1;
+  size_t n;
+  long in_FS_OFFSET;
+  uchar local_98 [32];
+  uchar local_78 [32];
+  char local_58 [72];
+  long local_10;
+  
+  local_10 = *(long *)(in_FS_OFFSET + 0x28);
+  printf("Input Password: ");
+  __isoc23_scanf(&DAT_00102062,local_98);
+  n = strlen((char *)local_98);
+  SHA256(local_98,n,local_78);
+  bytes_to_hex(local_78,0x20,local_58);
+  iVar1 = strcmp("811eb81b9d11d65a36c53c3ebdb738ee303403cb79d781ccf4b40764e0a9d12a",local_58);
+  if (iVar1 == 0) {
+    puts("You win :)");
+  }
+  else {
+    puts("You lose :(");
+  }
+  if (local_10 != *(long *)(in_FS_OFFSET + 0x28)) {
+                    /* WARNING: Subroutine does not return */
+    __stack_chk_fail();
+  }
+  return;
+}
+
+step 4: strcmp("811eb81b9d11d65a36c53c3ebdb738ee303403cb79d781ccf4b40764e0a9d12a",local_58);
+
+step 5: identify 811eb81b9d11d65a36c53c3ebdb738ee303403cb79d781ccf4b40764e0a9d12a "hash"
+step 6 : use hash-identifier tool paste the hash
+step 7: it show sha256   "https://10015.io/tools/sha256-encrypt-decrypt"  decrypt hash 
+step 8: chicken
+============================================
+
+============================================
+picoctf "asciiftw "
+
+step 1:objdump -d -M intel ./asciiftw  
+step 2: view the  <main> " BYTE PTR [rbp-0x30],0x61"
+sep 3: convert to ascii 
+
+objdump -d -M intel ./asciiftw |
+grep -oP 'mov\s+BYTE PTR.*?,0x\K[0-9a-fA-F]{2}' |
+python3 -c 'import sys; print("".join(chr(int(x,16)) for x in sys.stdin.read().split()))'
+
+============================================
+
+============================================
+picoctf "disassembler-dump0_a.txt  "
+step 1: cat disassembler-dump0_a.txt 
+step 2:<+15>:    mov    eax,0x30 
+step 3:0x30  -> Converter  Hexadecimal to Decimal
+step 4: 48
+============================================
+
+============================================
+picoctf "disassembler-dump0_b.txt  "
+step 1: cat disassembler-dump0_b.txt 
+step 2:<+15>:    mov    DWORD PTR [rbp-0x4],0x9fe1a 
+step 3:0x9fe1a  -> Converter  Hexadecimal to Decimal
+step 4: 654874
+
+============================================
+picoctf "disassembler-dump0_c.txt  "
+step 1: cat disassembler-dump0_c.txt
+
+step 2:
+<+15>:    mov    DWORD PTR [rbp-0xc],0x9fe1a
+<+22>:    mov    DWORD PTR [rbp-0x8],0x4
+
+step 3:0x9fe1a  -> Converter  Hexadecimal to Decimal
+step 4: 654874
+
+step 5:  654874*4
+step 6: <+36>:    add    eax,0x1f5  -> Converter  Hexadecimal to Decimal "501 "
+step 7:501 + 26,19,496
+step 8:26,19,997
+ 
+============================================
+
+============================================
+picoctf "disassembler-dump0_d.txt  "
+step 1: cat disassembler-dump0_d.txt
+step 2: <+15>:    mov    DWORD PTR [rbp-0x4],0x9fe1a
+step 3: <+22>:    cmp    DWORD PTR [rbp-0x4],0x2710
+step 4: <+37>:    add    DWORD PTR [rbp-0x4],0x65
+
+hex to decimal
+0x9fe1a -> 654874
+0x2710 -> 10000
+0x65 -> 101
+
+654874 - 101 = 6,54,773
+============================================
+
+
+
+============================================
+picoctf "gdb baby step 1"
+
+step 1:chmod +x debugger0_a 
+
+step 2:pwndbg ./debugger0_a
+ step 3:b main
+step 4:r
+step 5:0x86342
+step 6:Hexadecimal to Decimal Converter 549698
+
+============================================
+
+============================================
+GDB baby step 2
+
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+
+int main(void)
+
+{
+  undefined4 local_10;
+  undefined4 local_c;
+  
+  local_c = 0x1e0da;
+  for (local_10 = 0; local_10 < 0x25f; local_10 = local_10 + 1) {
+    local_c = local_c + local_10;
+  }
+  return local_c;
+}
+
+
+step 4: view   local_c = 0x1e0da; and  for (local_10 = 0; local_10 < 0x25f;
+step 5: a0x1e0da and  0x25f
+step  6: Hexadecimal to Decimal Converter  "a0x1e0da     -> 663053"  "0x25f   -> 607"
+
+step 7: run c code 
+
+┌──(kali㉿kali)-[~/Documents/reverse]
+└─$ ./debugger0_bc 
+307019
+
+============================================
+
+============================================
+GDB baby step 3
+
+step 1: pwndbg ./debugger0_c
+step 2:b main
+step 3:n 3 time
+step 4:x/4xb $rbp-0x4
+
+pwndbg> x/4xb $rbp-0x4
+0x7fffffffde9c: 0x6b    0xc9    0x62    0x22
+
+
+============================================
+
+
+============================================
+Picker I
+
+
+step 1:nc xebec.cylabacademy.net 19711
+step 2:check py code
+step 3:then 
+┌──(root㉿kali)-[/home/kali]
+└─# nc xebec.cylabacademy.net 19711
+Try entering "getRandomNumber" without the double quotes...
+==> win
+0x61 0x63 0x61 0x64 0x65 0x6d 0x79 0x7b 0x34 0x5f 0x64 0x31 0x34 0x6d 0x30 0x6e 0x64 0x5f 0x31 0x6e 0x5f 0x37 0x68 0x33 0x5f 0x72 0x30 0x75 0x67 0x68 0x5f 0x31 0x39 0x33 0x64 0x33 0x36 0x32 0x64 0x7d 
+Try entering "getRandomNumber" without the double quotes...
+
+
+
+step 4:echo '0x61 0x63 0x61 0x64 0x65 0x6d 0x79 0x7b 0x34 0x5f 0x64 0x31 0x34 0x6d 0x30 0x6e 0x64 0x5f 0x31 0x6e 0x5f 0x37 0x68 0x33 0x5f 0x72 0x30 0x75 0x67 0x68 0x5f 0x31 0x39 0x33 0x64 0x33 0x36 0x32 0x64 0x7d' | sed 's/0x//g' | tr -d ' \n' | xxd -r -p
+
+convert to char
+
+============================================
+
+
+============================================
+
+Picker 2
+
+step 1:nc xebec.cylabacademy.net 19711
+step 2:check py code
+step 3:then 
+ nc chatelaine.cylabacademy.net 25826
+==> globals()["w" + "in"]
+0x61 0x63 0x61 0x64 0x65 0x6d 0x79 0x7b 0x66 0x31 0x6c 0x37 0x33 0x72 0x35 0x5f 0x66 0x34 0x31 0x6c 0x5f 0x63 0x30 0x64 0x33 0x5f 0x72 0x33 0x66 0x34 0x63 0x37 0x30 0x72 0x5f 0x6d 0x31 0x67 0x68 0x37 0x5f 0x35 0x75 0x63 0x63 0x33 0x33 0x64 0x5f 0x63 0x39 0x61 0x61 0x37 0x61 0x33 0x63 0x7d 
+
+echo '0x61 0x63 0x61 0x64 0x65 0x6d 0x79 0x7b 0x66 0x31 0x6c 0x37 0x33 0x72 0x35 0x5f 0x66 0x34 0x31 0x6c 0x5f 0x63 0x30 0x64 0x33 0x5f 0x72 0x33 0x66 0x34 0x63 0x37 0x30 0x72 0x5f 0x6d 0x31 0x67 0x68 0x37 0x5f 0x35 0x75 0x63 0x63 0x33 0x33 0x64 0x5f 0x63 0x39 0x61 0x61 0x37 0x61 0x33 0x63 0x7d' | sed 's/0x//g' | tr -d ' \n' | xxd -r -p
+
+convert to char
+
+============================================
+
+============================================
+
+good boy 
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+
+void processEntry entry(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined1 auStack_8 [8];
+  
+  __libc_start_main(FUN_001010c0,param_2,&stack0x00000008,FUN_00101260,FUN_001012d0,param_1,
+                    auStack_8);
+  do {
+                    /* WARNING: Do nothing block with infinite loop */
+  } while( true );
+}
+
+
+step 4:  "FUN_001010c0" double click 
+step 5: 
+
+undefined8 FUN_001010c0(void)
+
+{
+  long in_FS_OFFSET;
+  int local_118;
+  short local_114;
+  long local_10;
+  
+  local_10 = *(long *)(in_FS_OFFSET + 0x28);
+  __printf_chk(1,"Enter the password: ");
+  __isoc99_scanf("%255s",&local_118);
+  if ((local_118 == 0x30783468) && (local_114 == 0x72)) {
+    puts("Good boy!");
+  }
+  else {
+    puts("Bad boy!");
+  }
+  if (local_10 == *(long *)(in_FS_OFFSET + 0x28)) {
+    return 0;
+  }
+                    /* WARNING: Subroutine does not return */
+  __stack_chk_fail();
+}
+
+step 6:  0x30783468 hover mouse it show the 0x4h "char"
+
+step 7: our system little endian so show we should reverse value : 0x30783468 
+
+68347830x0 so password is h4x0r
+============================================
+
+============================================
+bingus "crack"
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+step 4:
+
+
+void processEntry entry(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined1 auStack_8 [8];
+  
+  __libc_start_main(FUN_00101149,param_2,&stack0x00000008,0,0,param_1,auStack_8);
+  do {
+                    /* WARNING: Do nothing block with infinite loop */
+  } while( true );
+}
+
+step 5: "FUN_00101149" double click 
+
+
+undefined8 FUN_00101149(int param_1,long param_2)
+
+{
+  size_t sVar1;
+  int local_20;
+  int local_1c;
+  
+  if (((param_1 != 2) || (**(char **)(param_2 + 8) != *(char *)(*(long *)(param_2 + 8) + 1))) ||
+     (sVar1 = strlen(*(char **)(param_2 + 8)), sVar1 != 2)) {
+    puts("Bingus exploded");
+    return 1;
+  }
+  local_1c = 0x66;
+  for (local_20 = 0; sVar1 = strlen("This is a red herring"), (ulong)(long)local_20 < sVar1;
+      local_20 = local_20 + 1) {
+    local_1c = local_1c + "This is a red herring"[local_20];
+  }
+  if (local_1c + (int)*(char *)(*(long *)(param_2 + 8) + 1) + (int)**(char **)(param_2 + 8) != 0x8c5
+     ) {
+    puts("Bingus exploded");
+    return 1;
+  }
+  puts("Bingus survived");
+  return 0;
+}
+
+
+step 6: local_1c = 0x66; -> 102 char and        0x8c5 -> 2245
+
+step 7: 
+┌──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./bing    
+2021
+
+step 8: now 2245 - 102 = 224 
+ 224 /2 = 112 because  sVar1 != 2)
+step 9: asci table  
+answer : pp
+         
+                                                                                                                                                                                                                                           
+┌──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./bingus pp
+Bingus survived
+
+============================================
+
+
+============================================
+crack : crackmepal
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+step 4 : understand code and random password with @ 
+──(root㉿kali)-[/home/kali/Documents/reverse/crack]
+└─# ./crackmeMario @aaj-sdwd
+good job! now keygen me!
+
+
+============================================
+============================================
+crack : xordemo*
+
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+undefined8 main(int param_1,long param_2)
+
+{
+  char cVar1;
+  undefined8 uVar2;
+  
+  if (param_1 == 2) {
+    cVar1 = checkPassword(*(undefined8 *)(param_2 + 8));
+    if (cVar1 == '\0') {
+      puts("fail");
+      uVar2 = 0;
+    }
+    else {
+      puts("Jackpot");
+      uVar2 = 1;
+    }
+  }
+  else {
+    puts("Need exactly one argument.");
+    uVar2 = 0xffffffff;
+  }
+  return uVar2;
+}
+
+step  4: double click : checkPassword
+
+
+bool checkPassword(long param_1)
+
+{
+  int iVar1;
+  size_t sVar2;
+  long in_FS_OFFSET;
+  int local_44;
+  byte local_3e [30];
+  long local_20;
+  
+  local_20 = *(long *)(in_FS_OFFSET + 0x28);
+  local_3e[0] = 0x62;
+  local_3e[1] = 0x61;
+  local_3e[2] = 100;
+  local_3e[3] = 0x62;
+  local_3e[4] = 0x65;
+  local_3e[5] = 0x65;
+  local_3e[6] = 0x66;
+  local_3e[7] = 0x31;
+  local_3e[8] = 0x32;
+  local_3e[9] = 0;
+  local_3e[10] = 0x10;
+  local_3e[0xb] = 0x14;
+  local_3e[0xc] = 10;
+  local_3e[0xd] = 5;
+  local_3e[0xe] = 0xc;
+  local_3e[0xf] = 0x17;
+  local_3e[0x10] = 10;
+  local_3e[0x11] = 2;
+  local_3e[0x12] = 6;
+  local_3e[0x13] = 0;
+  for (local_44 = 0; sVar2 = strlen((char *)local_3e), (ulong)(long)local_44 <= sVar2;
+      local_44 = local_44 + 1) {
+    local_3e[(long)local_44 + 0x14] = local_3e[local_44] ^ *(byte *)(param_1 + local_44);
+  }
+  sVar2 = strlen((char *)(local_3e + 10));
+  iVar1 = strncmp((char *)(local_3e + 0x14),(char *)(local_3e + 10),sVar2);
+  if (local_20 != *(long *)(in_FS_OFFSET + 0x28)) {
+                    /* WARNING: Subroutine does not return */
+    __stack_chk_fail();
+  }
+  return iVar1 == 0;
+}
+
+step 5: cat xordemc.c   
+step 6: ./xordemc 
+step 7:                                                                                                                                                                                                                                           
+┌──(root㉿kali)-[/home/kali/Documents/reverse]
+└─# ./xordemo  rungirl34
+Jackpot
+          
+
+============================================
+
+
+============================================
+crack : p@ssw0rd
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+
+undefined8 main(void)
+
+{
+  long lVar1;
+  undefined8 uVar2;
+  int __edflag;
+  char local_78 [48];
+  char local_48 [52];
+  int local_14;
+  char *local_10;
+  
+  lVar1 = ptrace(PTRACE_TRACEME,0,1,0);
+  if (lVar1 == 0) {
+    builtin_strncpy(local_48,"9J<q=^\':h*#*d:#+Jh*9)#\'+#>)\'Bs",0x1f);
+    local_48[0x1f] = '\0';
+    local_48[0x20] = '\0';
+    local_48[0x21] = '\0';
+    local_48[0x22] = '\0';
+    local_48[0x23] = '\0';
+    local_48[0x24] = '\0';
+    local_48[0x25] = '\0';
+    local_48[0x26] = '\0';
+    local_48[0x27] = '\0';
+    printf("Enter a Password: ");
+    __edflag = (int)local_78;
+    __isoc99_scanf(&DAT_00102029);
+    encrypt(local_78,__edflag);
+    local_10 = local_78;
+    local_14 = strcmp(local_10,local_48);
+    if (local_14 == 0) {
+      printf("Congrats, Access Granted!!");
+    }
+    else {
+      printf("Try Harder and Debug More!");
+    }
+    uVar2 = 0;
+  }
+  else {
+    puts("Debugger Detected");
+    uVar2 = 1;
+  }
+  return uVar2;
+}
+
+step 4: cat pass
+step 5:
+                                                                                                                                                                                                                                         
+┌──(root㉿kali)-[/home/kali/Documents/reverse]
+└─# ./pass              
+CTF{Ghf1Dr4-4nD-5Tr4C3-f15-H3f1L}
+                                      
+============================================
+
+
+============================================
+crack: glow wine 
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+undefined8 main(int param_1,long param_2)
+
+{
+  size_t sVar1;
+  
+  if (param_1 < 2) {
+    puts("usage: ./glowwine <key>");
+  }
+  else {
+    sVar1 = strlen(*(char **)(param_2 + 8));
+    if (sVar1 != 5) {
+      sorrybro();
+    }
+    if (*(char *)(*(long *)(param_2 + 8) + 1) != '@') {
+      sorrybro();
+    }
+    if ((int)*(char *)(*(long *)(param_2 + 8) + 4) +
+        (int)*(char *)(*(long *)(param_2 + 8) + 2) + (int)*(char *)(*(long *)(param_2 + 8) + 3) !=
+        300) {
+      sorrybro();
+    }
+    puts("nice one! Now, can you keygen me?");
+  }
+  return 0;
+}
+
+step 4: cat glow.c
+step 5: 
+
+                                                                                                                                                                                             
+┌──(root㉿kali)-[/home/kali/Documents/reverse]
+└─# ./glow        
+Generated key: U@mvI
+
+
+============================================
+
+============================================
+crack: weird
+step 1: strings weird | grep UPX
+step 2: upx -d weird -o neweird       
+step 3: open into program ghidra to codebrowser
+step 4: look at symbol tree filter  --> secret
+
+  lStack_10 = *(long *)(in_FS_OFFSET + 0x28);
+  abStack_38[0] = 0x6f;
+  abStack_38[1] = 0x65;
+  abStack_38[2] = 0x68;
+  abStack_38[3] = 0x6e;
+  abStack_38[4] = 0x72;
+  abStack_38[5] = 0x30;
+  abStack_38[6] = 0x68;
+  abStack_38[7] = 0x6c;
+  abStack_38[8] = 0x6a;
+  abStack_38[9] = 0x30;
+  abStack_38[10] = 0x6b;
+  abStack_38[0xb] = 0x39;
+  abStack_38[0xc] = 0x3b;
+  abStack_38[0xd] = 0x3e;
+  abStack_38[0xe] = 0x3e;
+  abStack_38[0xf] = 0x3a;
+  abStack_38[0x10] = 0x3e;
+  abStack_38[0x11] = 0x30;
+  abStack_38[0x12] = 0x3d;
+  abStack_38[0x13] = 0x3c;
+  abStack_38[0x14] = 0x3a;
+  abStack_38[0x15] = 0x6c;
+  abStack_38[0x16] = 0x3d;
+  abStack_38[0x17] = 0x30;
+  abStack_38[0x18] = 0x31;
+  abStack_38[0x19] = 0x31;
+  abStack_38[0x1a] = 0x30;
+  abStack_38[0x1b] = 0x3d;
+  abStack_38[0x1c] = 0x3b;
+  abStack_38[0x1d] = 0x3e;
+  abStack_38[0x1e] = 0x6c;
+  abStack_38[0x1f] = 0x6f;
+  abStack_38[0x20] = 0x6c;
+  abStack_38[0x21] = 0x3e;
+  abStack_38[0x22] = 0x6c;
+  abStack_38[0x23] = 0x3e;
+  abStack_38[0x24] = 0x6b;
+  abStack_38[0x25] = 0x74;
+  abStack_38[0x26] = 0;
+  for (uStack_48 = 0; uStack_48 < 0x26; uStack_48 = uStack_48 + 1) {
+    abStack_38[uStack_48] = abStack_38[uStack_48] ^ 9;
+  printf("Flag : %s\n",abStack_38);
+  if (lStack_10 != *(long *)(in_FS_OFFSET + 0x28)) {
+    __stack_chk_fail();
+  return;
+
+step 5:neweird.txt
+
+payload
+
+python3 - <<'PY'
+data = [
+    0x6f, 0x65, 0x68, 0x6e, 0x72, 0x30,
+    0x68, 0x6c, 0x6a, 0x30, 0x6b, 0x39,
+    0x3b, 0x3e, 0x3e, 0x3a, 0x3e, 0x30,
+    0x3d, 0x3c, 0x3a, 0x6c, 0x3d, 0x30,
+    0x31, 0x31, 0x30, 0x3d, 0x3b, 0x3e,
+    0x6c, 0x6f, 0x6c, 0x3e, 0x6c, 0x3e,
+    0x6b, 0x74
+]
+
+# XOR decode
+flag = bytes(b ^ 0x09 for b in data)
+
+print("[+] Decoded Flag:", flag.decode("ascii"))
+PY
+
+============================================
+
+============================================
+crack : getting _started
+step 1: open into program ghidra to codebrowser
+step 2: look at symbol tree filter -> main
+step 3: look at side of decompile code 
+
+
+undefined8 main(int param_1,long param_2)
+
+{
+  int iVar1;
+  int *piVar2;
+  char *__s2;
+  int local_20;
+  int local_1c;
+  
+  piVar2 = malloc(0x18);
+  if (param_1 < 2) {
+    puts("Denied.");
+  }
+  else {
+    *piVar2 = 0x6e;
+    piVar2[1] = 0x60;
+    piVar2[2] = 0x5e;
+    piVar2[3] = 0x6d;
+    piVar2[4] = 0x60;
+    piVar2[5] = 0x6f;
+    for (local_20 = 0; local_20 < 5; local_20 = local_20 + 1) {
+      *piVar2 = *piVar2 + 1;
+      piVar2[1] = piVar2[1] + 1;
+      piVar2[2] = piVar2[2] + 1;
+      piVar2[3] = piVar2[3] + 1;
+      piVar2[4] = piVar2[4] + 1;
+      piVar2[5] = piVar2[5] + 1;
+    }
+    __s2 = malloc(7);
+    for (local_1c = 0; local_1c < 7; local_1c = local_1c + 1) {
+      __s2[local_1c] = (char)piVar2[local_1c];
+    }
+    __s2[6] = '\0';
+    iVar1 = strcmp(*(char **)(param_2 + 8),__s2);
+    if (iVar1 == 0) {
+      puts("Welcome.");
+    }
+    else {
+      puts("Denied.");
+    }
+  }
+  return 0;
+}
+
+
+
+step 4: python3 -c "print(''.join(chr(x+5) for x in [0x6e,0x60,0x5e,0x6d,0x60,0x6f]))"
+============================================
+
+============================================
+tryhackme complie
+
+
+step 1: strings Compiled-1688545393558.Compiled 
+Password: DoYouEven%sCTF
+
+step 2:
+         
+┌──(root㉿kali)-[/home/…/Documents/reverse/tryhackme/tryhackme]
+└─# ltrace ./Compiled-1688545393558.Compiled
+fwrite("Password: ", 1, 10, 0x7fc488c3b580)                                                                                                      = 10
+__isoc99_scanf(0x560978eec00f, 0x7ffc9b0856d0, 0x7fc488c3c750, 10Password: DoYouEven%sCTF
+)                                                                               = 1
+strcmp("%sCTF", "__dso_handle")                                                                                                                  = -58
+strcmp("%sCTF", "_init")                                                                                                                         = -58
+printf("Try again!")                                                                                                                             = 10
+Try again!+++ exited (status 0) +++
+
+step 3:
+
+┌──(root㉿kali)-[/home/…/Documents/reverse/tryhackme/tryhackme]
+└─# ltrace ./Compiled-1688545393558.Compiled
+fwrite("Password: ", 1, 10, 0x7f3937ddc580)                                                                                                      = 10
+__isoc99_scanf(0x55ccf7eb800f, 0x7fffa6b4ec60, 0x7f3937ddd750, 10Password: DoYouEven_init
+)                                                                               = 1
+strcmp("_init", "__dso_handle")                                                                                                                  = 10
+strcmp("_init", "__dso_handle")                                                                                                                  = 10
+strcmp("_init", "_init")                                                                                                                         = 0
+printf("Correct!")                                                                                                                               = 8
+Correct!+++ exited (status 0) +++
+                                  
+step 4: correct : DoYouEven_init
+
+============================================
+
+============================================
+tryhackme : 0x41haz
+step 1:file 0x41haz-1640335532346.0x41haz
+step 2:fix corrupt elf format fix the elf format " printf '\x01' | dd of=0x41haz-1640335532346.0x41haz bs=1 seek=5 count=1 conv=notrunc  "
+step 3: r2 -a x86 -b 64 0x41haz-1640335532346.0x41haz
+step 4:aaa
+step 5:s main
+step 6:pdf
+
+  0x00001169      4883ec40       sub rsp, 0x40
+│           0x0000116d      48b8324040..   movabs rax, 0x6667243532404032 ; '2@@25$gf'
+│           0x00001177      488945ea       mov qword [var_16h], rax
+│           0x0000117b      c745f27354..   mov dword [var_eh], 0x40265473 ; 'sT&@'
+│           0x00001182      66c745f64c00   mov word [var_ah], 0x4c     ; 'L'
+
+step 7:2@@25$gfsT&@L
+
+
+============================================
+
+
+============================================
+tryhackme: classicpasswd.Challenge 
+
+step 1:file classicpasswd.Challenge 
+step 2:strings classicpasswd.Challenge  
+step 3:
+ ltrace ./classicpasswd.Challenge
+printf("Insert your username: ")              = 22
+__isoc99_scanf(0x56150d2e301b, 0x7ffe1a2e1c60, 0, 0Insert your username: ll
+) = 1
+strcpy(0x7ffe1a2e1bd0, "ll")                  = 0x7ffe1a2e1bd0
+strcmp("ll", "AGB6js5d9dkG7")                 = 43
+puts("\nAuthentication Error"
+Authentication Error
+)                = 22
+exit(0 <no return ...>
++++ exited (status 0) +++
+
+
+step 4:
+
+ltrace ./classicpasswd.Challenge
+printf("Insert your username: ")              = 22
+__isoc99_scanf(0x55748fe8201b, 0x7ffff47ae100, 0, 0Insert your username: AGB6js5d9dkG7
+) = 1
+strcpy(0x7ffff47ae070, "AGB6js5d9dkG7")       = 0x7ffff47ae070
+strcmp("AGB6js5d9dkG7", "AGB6js5d9dkG7")      = 0
+puts("\nWelcome"
+Welcome
+)                             = 9
+printf("THM{%d%d}", 6523512, 8496)            = 16
+exit(0THM{65235128496} <no return ...>
++++ exited (status 0) +++
+
+step 5:AGB6js5d9dkG7
+
+============================================
+============================================
+============================================
+============================================
+============================================
+============================================
+============================================
+
+step 1:
+step 2:
+step 3:
+step 4:
+step 5:
+step 6:
+step 7:
+step 8 :
+step 9:
+step 10:
+
+decompiler explorer
+https://dogbolt.org/ 
