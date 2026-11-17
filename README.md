@@ -3,7 +3,7 @@
 
 <p align="center">
   <a href="https://github.com/manikandantn68/linux-persistence-Privilege-Escalation">
-    <img src="https://readme-typing-svg.demolab.com?lines=Linux+Persistence+%26+Privilege+Escalation;Author%3A+M.+Manikandan;Authorized+Labs+%26+CTFs+Only;Enumeration+%7C+Persistence+%7C+Privilege+Escalation&font=Fira+Code&weight=600&size=24&duration=3500&pause=1000&color=36BCF7&center=true&vCenter=true&width=900&height=140" alt="Linux Persistence & Privilege Escalation by M. Manikandan" />
+    <img src="https://readme-typing-svg.demolab.com?lines=Linux+Persistence+%26+Privilege+Escalation;Authorized+Labs+%26+CTFs+Only;Enumeration+%7C+Persistence+%7C+Privilege+Escalation;Author%3A+M.+Manikandan&font=Fira+Code&weight=600&size=24&duration=3500&pause=1000&color=36BCF7&center=true&vCenter=true&width=900&height=140" alt="Linux Persistence & Privilege Escalation by M. Manikandan" />
   </a>
 </p>
 
