@@ -1,4 +1,5 @@
 <div align="center">
+<img width="1700" height="240" alt="image" src="https://github.com/user-attachments/assets/dd4202a6-d262-4755-bd50-560463a0e39b" />
 
 ![Linux Security Notes](<img width="1700" height="240" alt="image" src="https://github.com/user-attachments/assets/912c1d26-433a-4a7c-b5d1-dbc165d3acfa" />)
 
