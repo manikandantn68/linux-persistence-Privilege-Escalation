@@ -1,6 +1,6 @@
 <div align="center">
 
-![Linux Security Notes](banner.svg)
+![Linux Security Notes](<img width="1700" height="240" alt="image" src="https://github.com/user-attachments/assets/912c1d26-433a-4a7c-b5d1-dbc165d3acfa" />)
 
 ![Linux](https://img.shields.io/badge/OS-Linux-FCC624?style=flat-square&logo=linux&logoColor=black)
 ![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)
