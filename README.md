@@ -21,7 +21,8 @@
 ## 📋 Table of Contents
 
 <details open>
-<summary><b>🔵 🔍 &nbsp;ENUMERATION — 8 techniques</b></summary>
+<summary><b>🔵 🔍 &nbsp;<img width="1200" height="110" alt="divider-blue" src="https://github.com/user-attachments/assets/ee09477f-dbed-4ed4-8c70-434122ecbb3b" />
+</b></summary>
 <br>
 
 | # | Technique |
@@ -38,7 +39,8 @@
 </details>
 
 <details open>
-<summary><b>🟠 🔒 &nbsp;PERSISTENCE — 4 techniques</b></summary>
+<summary><b>🟠 🔒 &nbsp;<img width="1200" height="110" alt="divider-orange" src="https://github.com/user-attachments/assets/a78853ac-794d-4404-8197-19e91e87382b" />
+</b></summary>
 <br>
 
 | # | Technique |
@@ -51,7 +53,9 @@
 </details>
 
 <details open>
-<summary><b>🔴 ⚡ &nbsp;PRIVILEGE ESCALATION — 17 techniques</b></summary>
+<summary><b>🔴 ⚡ &nbsp;<img width="1200" height="110" alt="divider-red" src="https://github.com/user-attachments/assets/a5c9f4ee-2ca6-4709-a56b-e6130f80696d" />
+
+</b></summary>
 <br>
 
 | # | Technique |
