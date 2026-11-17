@@ -3,7 +3,6 @@
 
 <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1000&color=F75C7E&center=true&vCenter=true&width=600&lines=29+Hands-On+Linux+Techniques+🛠️;Run+in+Your+Own+Lab+Only+⚠️;Enumerate+→+Persist+→+Escalate+🚀" alt="Typing SVG" /></a>
 
-<img src="assets/pulse.svg" width="24"/> <b>LIVE LAB MODE</b> <img src="assets/pulse.svg" width="24"/>
 
 <br>
 
