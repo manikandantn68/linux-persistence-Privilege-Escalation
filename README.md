@@ -272,7 +272,8 @@ gtfo python
 
 ---
 
-<img src="assets/divider-orange.svg" width="100%"/>
+<img width="900" height="160" alt="banner-02-persist" src="https://github.com/user-attachments/assets/04b535f2-7327-4b9c-bd4f-43e4e990e051" />
+
 
 
 ---
@@ -520,8 +521,7 @@ ls /etc/systemd/system/ | grep -v snap
 
 ---
 
-<img src="assets/divider-red.svg" width="100%"/>
-
+<img width="900" height="160" alt="banner-03-privesc" src="https://github.com/user-attachments/assets/6cf8eb98-b0c2-4f07-9a8c-2b664cbb7ab2" />
 
 ---
 
