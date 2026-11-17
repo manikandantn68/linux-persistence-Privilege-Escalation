@@ -1,4 +1,3 @@
-<img width="900" height="160" alt="banner-01-enum" src="https://github.com/user-attachments/assets/434e21c3-38d5-4dfc-bad2-96a435ba9c8b" /><img width="1200" height="110" alt="divider-blue" src="https://github.com/user-attachments/assets/d38e8cb0-2700-42a7-b936-29ce5d06bdf4" /><div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B0000,50:FF4500,100:FFD700&height=200&section=header&text=Linux%20PrivEsc%20Lab&fontSize=55&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Enumeration%20%C2%B7%20Persistence%20%C2%B7%20Privilege%20Escalation&descAlignY=58&descSize=20" width="100%"/>
 
@@ -91,24 +90,8 @@
 | ⚡ Privilege Escalation | 🔴 red | 01–17 | Become root |
 
 ---
-<img width="1200" height="110" alt="divider-blue" src="https://github.com/user-attachments/assets/e04d6071-fc57-4d8d-9443-56f7b06f6f82" />
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="110" viewBox="0 0 1200 110">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0075ca"/>
-      <stop offset="50%" stop-color="#58a6ff"/>
-      <stop offset="100%" stop-color="#0075ca"/>
-      <animateTransform attributeName="gradientTransform" type="translate" values="-1 0; 1 0; -1 0" dur="6s" repeatCount="indefinite"/>
-    </linearGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  </defs>
-  <rect width="1200" height="110" fill="#0d1117"/>
-  <rect x="0" y="50" width="1200" height="4" fill="url(#g)" filter="url(#glow)"/>
-  <text x="600" y="42" text-anchor="middle" font-family="monospace" font-size="26" font-weight="bold" fill="#58a6ff" filter="url(#glow)">ENUMERATION</text>
-  <text x="600" y="92" text-anchor="middle" font-size="26">&#128269;
-    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -8; 0 0" dur="1.4s" repeatCount="indefinite"/>
-  </text>
-</svg>
+<img width="900" height="160" alt="banner-01-enum" src="https://github.com/user-attachments/assets/434e21c3-38d5-4dfc-bad2-96a435ba9c8b" /><img width="1200" height="110" alt="divider-blue" src="https://github.com/user-attachments/assets/d38e8cb0-2700-42a7-b936-29ce5d06bdf4" /><div align="center">
+
 
 
 ---
