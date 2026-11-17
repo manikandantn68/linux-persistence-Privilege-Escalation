@@ -1,8 +1,6 @@
 <div align="center">
 <img width="1700" height="240" alt="image" src="https://github.com/user-attachments/assets/dd4202a6-d262-4755-bd50-560463a0e39b" />
 
-![Linux Security Notes](<img width="1700" height="240" alt="image" src="https://github.com/user-attachments/assets/912c1d26-433a-4a7c-b5d1-dbc165d3acfa" />)
-
 ![Linux](https://img.shields.io/badge/OS-Linux-FCC624?style=flat-square&logo=linux&logoColor=black)
 ![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)
 ![CTF](https://img.shields.io/badge/Purpose-CTF%20%2F%20Lab-blueviolet?style=flat-square)
