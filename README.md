@@ -39,7 +39,8 @@
 
 ---
 
-## 🔵 🔍 ENUMERATION
+<img width="1800" height="320" alt="image" src="https://github.com/user-attachments/assets/97f4f26e-4a76-407e-87ba-e508a26bf6a0" />
+
 
 ---
 
@@ -228,7 +229,8 @@ gtfo python
 
 ---
 
-## 🟠 🔒 PERSISTENCE
+<img width="1800" height="320" alt="image" src="https://github.com/user-attachments/assets/69f233cd-246a-41d5-8d55-546964788f81" />
+
 
 ---
 
@@ -498,7 +500,8 @@ ls /etc/systemd/system/ | grep -v snap
 
 ---
 
-## 🔴 ⚡ PRIVILEGE ESCALATION
+<img width="1800" height="320" alt="image" src="https://github.com/user-attachments/assets/0236b39c-69a4-4420-a80a-a5eb5058b0bd" />
+
 
 ---
 
