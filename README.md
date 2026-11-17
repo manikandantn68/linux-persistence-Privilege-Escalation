@@ -1,8 +1,11 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B0000,50:FF4500,100:FFD700&height=200&section=header&text=Linux%20PrivEsc%20Lab&fontSize=55&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Enumeration%20%C2%B7%20Persistence%20%C2%B7%20Privilege%20Escalation&descAlignY=58&descSize=20" width="100%"/>
 
-<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1000&color=F75C7E&center=true&vCenter=true&width=600&lines=29+Hands-On+Linux+Techniques+🛠️;Run+in+Your+Own+Lab+Only+⚠️;Enumerate+→+Persist+→+Escalate+🚀" alt="Typing SVG" /></a>
-
+<p align="center">
+  <a href="https://github.com/manikandantn68/linux-persistence-Privilege-Escalation">
+    <img src="https://readme-typing-svg.demolab.com?lines=Linux+Persistence+%26+Privilege+Escalation;Author%3A+M.+Manikandan;Authorized+Labs+%26+CTFs+Only;Enumeration+%7C+Persistence+%7C+Privilege+Escalation&font=Fira+Code&weight=600&size=24&duration=3500&pause=1000&color=36BCF7&center=true&vCenter=true&width=900&height=140" alt="Linux Persistence & Privilege Escalation by M. Manikandan" />
+  </a>
+</p>
 
 <br>
 
