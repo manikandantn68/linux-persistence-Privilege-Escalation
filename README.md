@@ -90,7 +90,7 @@
 | ⚡ Privilege Escalation | 🔴 red | 01–17 | Become root |
 
 ---
-<img width="900" height="160" alt="banner-01-enum" src="https://github.com/user-attachments/assets/434e21c3-38d5-4dfc-bad2-96a435ba9c8b" /><img width="1200" height="110" alt="divider-blue" src="https://github.com/user-attachments/assets/d38e8cb0-2700-42a7-b936-29ce5d06bdf4" /><div align="center">
+<img width="900" height="160" alt="banner-01-enum" src="https://github.com/user-attachments/assets/434e21c3-38d5-4dfc-bad2-96a435ba9c8b" />
 
 
 
