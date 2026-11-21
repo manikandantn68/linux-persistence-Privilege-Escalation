@@ -1,0 +1,46 @@
+flip - flop stores the next instruction address inside the program counter . when the clock pulse happpes
+it moves thaat instruction to the next step .so the cpu knows exactly which instruction to run next , in the correct order and at the right time
+
+
+  cpu -> control unit  -> flip  -flop instruction -> temp store ->  1 bit  -> alc or other register'so "instruction reg, program counter , accoumlator, status register"
+
+Press 'a'
+    ↓
+Keyboard detects key-down
+    ↓
+Make code generated: 0x1E
+    ↓
+(Release later → break code: 0xF0, 0x1C)
+    ↓
+Each byte sent serially to PC interface
+    ↓
+Interface receives byte, sets "data available" flag,
+asserts hardware interrupt → CPU INTR pin
+    ↓
+Control unit saves PC & Flags (flip-flops)
+    ↓
+Loads ISR address into PC (flip-flops)
+    ↓
+Fetch IN AL, 0x60 → IR (flip-flops)
+    ↓
+Control unit decodes IN opcode (state machine flip-flops)
+    ↓
+I/O read from port 0x60 → data byte latched into AL (flip-flops)
+    ↓
+Now one byte of the make code (or break code) is inside the CPU
+    ↓
+ISR reads the byte, stores it in a buffer (in RAM)
+    ↓
+(ISR may be called multiple times for multi-byte sequences)
+    ↓
+Keyboard driver in OS processes the accumulated scan-code bytes,
+recognises a "make" press event for key number 0x1C
+    ↓
+Driver translates scan code to character using active keymap:
+   - Without Shift/Caps: 'a' (ASCII 0x61)
+   - With Shift or Caps: 'A' (ASCII 0x41)
+    ↓
+Character placed into the foreground application’s input queue
+(system call, GUI message loop, terminal input buffer, etc.)
+    ↓
+Application reads 'a' and uses it

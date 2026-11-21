@@ -1,0 +1,16 @@
+combinational logic circuit
+mux(multiplexer) is used to input give to output
+
+de-mux
+
+
+
+encoder
+decoder
+adder = hall adder, full adder
+subtractor = half,full
+magnitude comparator
+parity generator and checker
+
+
+PN Junction 
