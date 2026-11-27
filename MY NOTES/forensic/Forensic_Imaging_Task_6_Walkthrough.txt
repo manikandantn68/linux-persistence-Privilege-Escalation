@@ -1,0 +1,292 @@
+TRYHACKME - FORENSIC IMAGING
+TASK 6: PRACTICAL EXERCISE
+============================================
+
+OBJECTIVE
+---------
+1. Identify the attached 1 GB loop device.
+2. Create a RAW forensic image using dc3dd.
+3. Calculate the MD5 hash of the image (Task 6, Question 1).
+4. Verify the image against the source device.
+5. Mount the image read-only and read flag.txt (Task 6, Question 2).
+
+IMPORTANT LAB INSTRUCTIONS
+--------------------------
+- Turn off the VM used in Task 2 before starting Task 6.
+- Start the Task 6 lab machine.
+- SSH username: practical
+- SSH password: forensics
+- SSH address: MACHINE_IP shown by TryHackMe.
+
+Connect from your terminal:
+
+    ssh practical@MACHINE_IP
+
+Replace MACHINE_IP with the IP shown by TryHackMe. Enter the password when prompted.
+
+DEVICE IDENTIFICATION - BASED ON YOUR SCREENSHOT
+------------------------------------------------
+Your supplied Task 6 screenshot shows:
+
+    /dev/loop4    1G    loop    ext4
+
+The losetup output also identifies its backing file as:
+
+    /root/practical.img
+
+Therefore, the source device confirmed by your screenshot is:
+
+    /dev/loop4
+
+Do NOT use the literal placeholder /dev/loopX. It is not a real device.
+Do NOT select /dev/xdh just because it also shows 1G; it is a disk device,
+whereas the task specifically asks for the 1 GB loop device.
+
+If you restart the lab machine or reconnect to a different instance, check the
+device list again. Device numbers can change between instances.
+
+STEP 1 - CONFIRM THE DEVICE
+--------------------------
+Run:
+
+    sudo lsblk -a -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT
+
+Then:
+
+    sudo losetup -l
+
+Confirm that the 1 GB loop device is /dev/loop4 and that its backing file is
+/root/practical.img. If the output differs, stop and identify the correct
+1 GB loop device before continuing.
+
+Check the device details:
+
+    sudo losetup -l /dev/loop4
+    sudo blkid /dev/loop4
+    sudo blockdev --getsize64 /dev/loop4
+
+The last command prints the source device size in bytes.
+
+STEP 2 - CHECK AVAILABLE SPACE
+-----------------------------
+The image will be approximately the same size as the source device. Your earlier
+terminal output showed about 38 GB available on the root filesystem, which is
+more than enough for a 1 GB image. Check again before imaging:
+
+    df -h /home/practical
+
+STEP 3 - CREATE THE FORENSIC IMAGE
+---------------------------------
+Create the RAW image and save the dc3dd log:
+
+    sudo dc3dd if=/dev/loop4 of=/home/practical/forensic_1gb.img log=/home/practical/imaging_1gb.txt
+
+Parameter meanings:
+
+    if=     Source device to acquire
+    of=     Destination image file
+    log=    File containing the imaging log
+
+Wait for dc3dd to finish. Do not interrupt the acquisition.
+
+STEP 4 - CHECK THE IMAGE AND ACQUISITION LOG
+-------------------------------------------
+Check that the image exists and inspect its size:
+
+    ls -lh /home/practical/forensic_1gb.img
+
+Inspect the imaging log:
+
+    sudo cat /home/practical/imaging_1gb.txt
+
+The log should report that dc3dd completed and should show the number of bytes
+or sectors copied. The exact transfer speed and completion time can differ.
+
+Check the image size in bytes:
+
+    stat -c '%n : %s bytes' /home/practical/forensic_1gb.img
+
+Compare source and image sizes:
+
+    SOURCE_SIZE=$(sudo blockdev --getsize64 /dev/loop4)
+    IMAGE_SIZE=$(stat -c '%s' /home/practical/forensic_1gb.img)
+    printf 'Source size: %s bytes\nImage size:  %s bytes\n' "$SOURCE_SIZE" "$IMAGE_SIZE"
+    if [ "$SOURCE_SIZE" -eq "$IMAGE_SIZE" ]; then echo 'SIZE MATCH'; else echo 'SIZE MISMATCH - STOP AND INVESTIGATE'; fi
+
+Continue only if dc3dd completed successfully and the source and image sizes match.
+
+STEP 5 - CALCULATE THE IMAGE MD5 HASH (QUESTION 1)
+-------------------------------------------------
+Run:
+
+    sudo md5sum /home/practical/forensic_1gb.img
+
+Example output FORMAT ONLY:
+
+    32_HEXADECIMAL_CHARACTERS  /home/practical/forensic_1gb.img
+
+The example above is a format description, not the answer. Copy the actual
+32-character hexadecimal hash printed by your machine. Submit that hash for
+Task 6, Question 1.
+
+STEP 6 - VERIFY THE IMAGE AGAINST THE SOURCE
+-------------------------------------------
+Calculate the MD5 hashes of both the original loop device and the image:
+
+    sudo md5sum /dev/loop4 /home/practical/forensic_1gb.img
+
+The two 32-character hashes should be identical. If they differ, do not treat
+the image as verified; review the dc3dd log, source device, and image size.
+
+The hash for /home/practical/forensic_1gb.img is the value requested in
+Question 1.
+
+STEP 7 - CREATE A MOUNT POINT
+----------------------------
+Run:
+
+    sudo mkdir -p /mnt/forensic_1gb
+
+STEP 8 - MOUNT THE IMAGE READ-ONLY
+---------------------------------
+Your screenshot identifies the source filesystem as ext4. Mount the image
+read-only and prevent ext4 journal replay:
+
+    sudo mount -o ro,noload,loop /home/practical/forensic_1gb.img /mnt/forensic_1gb
+
+Check that it mounted:
+
+    findmnt /mnt/forensic_1gb
+
+List the image contents:
+
+    sudo ls -lah /mnt/forensic_1gb
+
+STEP 9 - FIND flag.txt
+----------------------
+Search the mounted filesystem:
+
+    sudo find /mnt/forensic_1gb -type f -name 'flag.txt' -print
+
+Use the exact path returned by find in the next command. Do not assume that
+flag.txt is in the top-level directory.
+
+For example, ONLY if find returns /mnt/forensic_1gb/flag.txt, run:
+
+    sudo cat /mnt/forensic_1gb/flag.txt
+
+If find returns a subdirectory path, use that exact path with sudo cat.
+
+The contents printed by cat are the answer to Task 6, Question 2. Copy the
+actual flag exactly as displayed. Do not use an example or guessed flag.
+
+STEP 10 - UNMOUNT THE IMAGE
+--------------------------
+After recording the flag, unmount the image:
+
+    sudo umount /mnt/forensic_1gb
+
+Confirm it is no longer mounted:
+
+    findmnt /mnt/forensic_1gb
+
+No output from findmnt means there is no mounted filesystem at that target.
+
+COMPLETE COMMAND SEQUENCE
+-------------------------
+The following sequence uses the source device confirmed in your screenshot.
+Run it after checking that /dev/loop4 still refers to the 1 GB loop device.
+
+    sudo lsblk -a -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT
+    sudo losetup -l
+    sudo losetup -l /dev/loop4
+    sudo blkid /dev/loop4
+    sudo blockdev --getsize64 /dev/loop4
+    df -h /home/practical
+
+    sudo dc3dd if=/dev/loop4 of=/home/practical/forensic_1gb.img log=/home/practical/imaging_1gb.txt
+
+    ls -lh /home/practical/forensic_1gb.img
+    sudo cat /home/practical/imaging_1gb.txt
+    stat -c '%n : %s bytes' /home/practical/forensic_1gb.img
+
+    SOURCE_SIZE=$(sudo blockdev --getsize64 /dev/loop4)
+    IMAGE_SIZE=$(stat -c '%s' /home/practical/forensic_1gb.img)
+    printf 'Source size: %s bytes\nImage size:  %s bytes\n' "$SOURCE_SIZE" "$IMAGE_SIZE"
+    if [ "$SOURCE_SIZE" -eq "$IMAGE_SIZE" ]; then echo 'SIZE MATCH'; else echo 'SIZE MISMATCH - STOP AND INVESTIGATE'; fi
+
+    sudo md5sum /home/practical/forensic_1gb.img
+    sudo md5sum /dev/loop4 /home/practical/forensic_1gb.img
+
+    sudo mkdir -p /mnt/forensic_1gb
+    sudo mount -o ro,noload,loop /home/practical/forensic_1gb.img /mnt/forensic_1gb
+    findmnt /mnt/forensic_1gb
+    sudo ls -lah /mnt/forensic_1gb
+    sudo find /mnt/forensic_1gb -type f -name 'flag.txt' -print
+
+    # Read flag.txt using the exact path returned by find, for example:
+    sudo cat /mnt/forensic_1gb/flag.txt
+
+    sudo umount /mnt/forensic_1gb
+    findmnt /mnt/forensic_1gb
+
+TROUBLESHOOTING
+---------------
+
+1. Error: /dev/loopX: No such file or directory
+   Cause: /dev/loopX was a placeholder, not a real device name.
+   Fix: Use the actual device confirmed by lsblk and losetup. Your screenshot
+        confirmed /dev/loop4 for this lab instance.
+
+2. Error: dc3dd: command not found
+   Check whether dc3dd is installed:
+
+       command -v dc3dd
+
+   Do not continue until the utility is available. Follow the lab environment's
+   package/setup instructions if it is missing.
+
+3. Error: No space left on device
+   Check available space:
+
+       df -h /home/practical
+
+   Do not save the image onto the source evidence device. The earlier output
+   showed /home/practical is on the root filesystem with substantial free space.
+
+4. Mount fails
+   First confirm the image exists and inspect its filesystem type:
+
+       ls -lh /home/practical/forensic_1gb.img
+       sudo file -s /home/practical/forensic_1gb.img
+       sudo blkid -p /home/practical/forensic_1gb.img
+
+   The supplied screenshot shows ext4 directly on /dev/loop4. If the image
+   inspection does not show an ext4 filesystem, stop and review the selected
+   source device and dc3dd log rather than guessing an offset or partition.
+
+5. umount reports that the target is busy
+   Leave the mounted directory and retry:
+
+       cd /home/practical
+       sudo umount /mnt/forensic_1gb
+
+FINAL ANSWERS TO RECORD
+-----------------------
+Task 6 - Question 1 (MD5 hash of the image):
+    [Paste the actual output of md5sum for forensic_1gb.img]
+
+Task 6 - Question 2 (content of flag.txt):
+    [Paste the actual content printed by cat]
+
+Do not submit placeholder text. Both answers must be collected from your own
+running TryHackMe Task 6 machine.
+
+SOURCE
+------
+TryHackMe - Forensic Imaging:
+https://tryhackme.com/room/forensicimaging
+
+Task 6 instructions specify the practical username/password, require the
+attached 1 GB loop device to be imaged, ask for the image's MD5 hash, and ask
+for the content of flag.txt from the mounted image.

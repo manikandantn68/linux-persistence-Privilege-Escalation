@@ -1,0 +1,154 @@
+cat > setup.sh <<'BASH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE="/home/kali/Documents/temp_extract_dir"
+KVER="3.10.0-1062.el7.x86_64"
+RPM="kernel-debuginfo-${KVER}.rpm"
+URL="https://buildlogs.centos.org/c7.1908.00.x86_64/kernel/20190808101829/${KVER}/${RPM}"
+RPM_SIZE=458262364
+VMLINUX="$BASE/extracted/usr/lib/debug/lib/modules/$KVER/vmlinux"
+SYSMAP="$BASE/boot/System.map-$KVER"
+REPO="$BASE/dwarf2json"
+BIN="$REPO/dwarf2json"
+OUTDIR="$BASE/vol3-symbols/linux"
+OUT="$OUTDIR/centos-7.json"
+
+R=$'\033[0m'
+C=$'\033[1;36m'
+G=$'\033[1;32m'
+Y=$'\033[1;33m'
+E=$'\033[1;31m'
+
+step() { printf '\n%b▶ %s%b\n' "$C" "$1" "$R"; }
+ok()   { printf '%b[OK]%b %s\n' "$G" "$R" "$1"; }
+fail() { printf '%b[ERROR]%b %s\n' "$E" "$R" "$1" >&2; exit 1; }
+
+[[ $EUID -eq 0 ]] || fail "Run as root."
+[[ -s "$BASE/dump.mem" ]] || fail "dump.mem not found."
+
+cd "$BASE"
+
+printf '%bCENTOS 7.7 — VOLATILITY 3 SYMBOL SETUP%b\n' "$C" "$R"
+
+step "1/5 — Install required tools"
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+
+apt-get install -y wget ca-certificates rpm2cpio cpio golang-go git python3
+
+ok "Tools installed"
+
+step "2/5 — Obtain matching vmlinux"
+
+if [[ ! -s "$VMLINUX" ]]; then
+
+    if [[ ! -f "$RPM" ]] || [[ $(stat -c '%s' "$RPM") -ne $RPM_SIZE ]]; then
+
+        [[ ! -f "$RPM" ]] || echo "Resuming incomplete RPM download"
+
+        wget -c --progress=bar:force:noscroll "$URL"
+
+    else
+        ok "Complete RPM already exists"
+    fi
+
+    actual=$(stat -c '%s' "$RPM")
+
+    [[ $actual -eq $RPM_SIZE ]] || fail "RPM incomplete: $actual/$RPM_SIZE bytes. Rerun to resume."
+
+    mkdir -p extracted
+
+    (
+        cd extracted
+        rpm2cpio "../$RPM" |
+        cpio -idm -u "./usr/lib/debug/lib/modules/$KVER/vmlinux"
+    )
+
+fi
+
+[[ -s "$VMLINUX" ]] || fail "vmlinux not found"
+
+ok "Matching vmlinux is ready"
+
+step "3/5 — Get and build dwarf2json"
+
+if [[ ! -x "$BIN" ]]; then
+
+    if [[ ! -d "$REPO/.git" ]]; then
+
+        [[ ! -e "$REPO" ]] || fail "dwarf2json directory exists but is not a Git checkout."
+
+        git clone https://github.com/volatilityfoundation/dwarf2json.git "$REPO"
+
+    fi
+
+    (
+        cd "$REPO"
+        go build -o dwarf2json .
+    )
+
+fi
+
+[[ -x "$BIN" ]] || fail "dwarf2json binary was not created"
+
+ok "dwarf2json is ready"
+
+step "4/5 — Generate ISF JSON"
+
+mkdir -p "$OUTDIR"
+
+TMP="$OUT.tmp"
+
+if [[ -s "$SYSMAP" ]]; then
+
+    "$BIN" linux \
+        --elf "$VMLINUX" \
+        --system-map "$SYSMAP" > "$TMP"
+
+else
+
+    echo "System.map not found; using vmlinux only"
+
+    "$BIN" linux --elf "$VMLINUX" > "$TMP"
+
+fi
+
+[[ -s "$TMP" ]] || fail "Generated JSON is empty"
+
+python3 - "$TMP" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    data = json.load(f)
+
+required = ("metadata", "symbols", "user_types", "base_types")
+
+missing = [key for key in required if key not in data]
+
+if missing:
+    raise SystemExit("Invalid ISF JSON: " + ", ".join(missing))
+
+print("JSON structure check: OK")
+PY
+
+mv "$TMP" "$OUT"
+
+ok "Symbol table generated"
+
+step "5/5 — Test Volatility 3"
+
+cd "$BASE"
+
+vol -s ./vol3-symbols -f ./dump.mem linux.pslist.PsList
+
+printf '\n%bSETUP COMPLETE%b\n' "$G" "$R"
+
+ls -lh "$VMLINUX" "$OUT"
+
+echo "Test completed successfully!"
+
+BASH

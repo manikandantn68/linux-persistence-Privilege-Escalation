@@ -1,0 +1,114 @@
+TryHackMe – Linux File System Analysis
+
+task2
+export PATH=/mnt/usb/bin:/mnt/usb/sbin
+export LD_LIBRARY_PATH=/mnt/usb/lib:/mnt/usb/lib64
+check-env
+
+-------
+Task 3 – Files, Permissions, and Timestamps
+
+1
+-
+find / -user bob -type f -cmin -1 2>/dev/null
+cat /var/tmp/findme.txt
+
+2
+-
+exiftool /var/www/html/assets/reverse.elf
+ans:application/octet-stream
+
+3
+-
+stat /etc/hosts
+Modify: 2020-10-26 21:10:44.000000000 +0000
+
+ans: 2020-10-26 21:10:44.000000000 +0000
+
+
+task 4
+
+1
+-
+cat /etc/passwd | grep ':0:'
+
+ans: b4ckd00r3d
+
+
+2
+-
+cat /etc/group | grep ':46:'
+
+ans: plugdev
+
+
+3
+-
+
+sudo cat /etc/sudoers
+
+sudo grep -n 'jane' /etc/sudoers
+
+ans :/usr/bin/pstree
+
+
+task 5
+1
+-
+sudo cat /home/jane/.bash_history
+
+
+2
+-
+sudo grep -nH -E 'THM\{[^}]+\}' /home/bob/.hidden* 2>/dev/null
+
+3
+-
+sudo stat /home/jane/.ssh/authorized_keys
+ans:2024-02-13 00:34:16.005897449 +0000
+
+task 6
+
+1
+-
+sudo debsums -e -c
+
+2
+-
+sudo find / -perm -u=s -type f 2>/dev/null
+
+Look for:
+/usr/bin/python3.8
+/var/tmp/bash
+
+sudo md5sum /var/tmp/bash
+
+
+
+task 7
+
+1
+-
+sudo chkrootkit
+sudo chkrootkit 2>&1 | grep -iE '\.sh|INFECTED'
+
+
+2
+-
+sudo rkhunter -c -sk
+Option	Meaning
+-c	Perform system checks
+-s	Skip non-critical checks
+-k	Skip prompts / keep scanning
+
+Look for this section in the output:
+Checking for passwd file changes
+Checking for group file changes
+Checking for UID 0 accounts
+
+Find the result corresponding to:
+Checking for UID 0 accounts
+
+
+ans: Warning
+

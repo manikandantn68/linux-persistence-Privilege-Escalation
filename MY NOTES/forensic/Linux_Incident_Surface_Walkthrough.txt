@@ -1,0 +1,754 @@
+TryHackMe: Linux Incident Surface
+=================================
+Room:
+https://tryhackme.com/room/linuxincidentsurface
+
+Lab login:
+Username: Ubuntu
+Password: TryHackMe!
+
+IMPORTANT NOTES
+---------------
+- Start the TryHackMe lab machine before running the commands.
+- Run the process-investigation commands as root, as instructed by the room.
+- Keep simple and netcom running while investigating them from another terminal.
+- Replace example PIDs with the PID shown by your own ps output.
+- Directly observed output and room-reference answers are identified separately.
+
+
+TASK 1: INTRODUCTION
+====================
+
+Read the introduction.
+
+Answer:
+Continue to the next task.
+
+
+TASK 2: LAB CONNECTION
+======================
+
+Objective:
+Count the files and folders in /home/activities/processes.
+
+STEP 1: Connect to the lab
+--------------------------
+Username: Ubuntu
+Password: TryHackMe!
+
+STEP 2: Move to the activity directory
+--------------------------------------
+Command:
+cd /home/activities/processes
+
+STEP 3: List the directory
+--------------------------
+Command:
+ls -la
+
+Actual entries observed:
+netcom
+simple.c
+suspicious
+
+STEP 4: Count top-level entries
+--------------------------------
+Command:
+find . -mindepth 1 -maxdepth 1 | wc -l
+
+Explanation:
+find        -> Searches for filesystem entries.
+-mindepth 1 -> Excludes the current directory (.).
+-maxdepth 1 -> Counts only entries directly inside this directory.
+wc -l       -> Counts the output lines.
+
+Answer:
+3
+
+Note:
+The count excludes . and .. . The result 3 was confirmed by the user's
+own ls -la and find output.
+
+
+TASK 3: LINUX INCIDENT SURFACE - AN OVERVIEW
+============================================
+
+Linux Attack Surface:
+Potential entry points an attacker may exploit.
+Examples:
+- Open ports
+- Running services
+- Vulnerable applications
+- Network communication
+
+Linux Incident Surface:
+Places where an investigator may find evidence after an incident.
+Examples:
+- System logs and authentication logs
+- Network traffic
+- Running processes
+- Running services
+- File and process integrity
+
+Answer:
+Continue to the next task.
+
+
+TASK 4: PROCESSES AND NETWORK COMMUNICATION
+===========================================
+
+ACTIVITY 1: CREATE AND RUN THE SIMPLE PROCESS
+---------------------------------------------
+
+STEP 1: Become root
+-------------------
+Command:
+sudo su
+
+STEP 2: Move to the activity directory
+--------------------------------------
+Command:
+cd /home/activities/processes
+
+STEP 3: Compile simple.c
+-----------------------
+Command:
+gcc simple.c -o /tmp/simple
+
+Explanation:
+gcc         -> GNU C compiler.
+simple.c    -> C source file supplied in the lab.
+-o          -> Specifies the output filename.
+/tmp/simple -> Compiled executable.
+
+STEP 4: Run the executable
+--------------------------
+Command:
+/tmp/simple
+
+Keep this process running. Open a second terminal for the investigation.
+
+STEP 5: Find the process
+------------------------
+Command:
+ps aux | grep '[s]imple'
+
+Actual output observed in this lab:
+root  1783  ... /tmp/simple
+
+PID: 1783
+User: root
+Executable: /tmp/simple
+
+STEP 6: Inspect open files
+--------------------------
+Command:
+sudo lsof -p 1783
+
+Explanation:
+lsof -> Lists open files belonging to a process.
+-p   -> Selects the specified process ID.
+
+Note:
+The first lsof attempt was run without root privileges and returned
+Permission denied. The process belonged to root. Use sudo (or run as root).
+
+
+ACTIVITY 2: INVESTIGATE NETCOM NETWORK COMMUNICATION
+----------------------------------------------------
+
+STEP 1: Start netcom
+--------------------
+In a terminal:
+sudo su
+cd /home/activities/processes
+./netcom
+
+Keep netcom running. Open another terminal.
+
+STEP 2: Find the netcom PID
+---------------------------
+Command:
+ps aux | grep '[n]etcom'
+
+Actual output observed in this lab:
+root  1934  ... ./netcom
+
+PID observed: 1934
+
+Note:
+The PID can change after restarting netcom. Find it again before querying.
+
+STEP 3: List network connections
+--------------------------------
+Command:
+sudo lsof -i -P -n
+
+Explanation:
+lsof -> Lists open files, including network sockets.
+-i   -> Selects network files/connections.
+-P   -> Shows numeric port numbers.
+-n   -> Shows numeric IP addresses; does not resolve hostnames.
+
+STEP 4: Narrow lsof to the netcom process
+-----------------------------------------
+Command:
+sudo lsof -nP -a -p 1934 -i
+
+Explanation:
+-a      -> ANDs the selected conditions.
+-p 1934 -> Selects PID 1934.
+-i      -> Shows network connections for that process.
+
+STEP 5: Start osquery as root
+-----------------------------
+Command:
+sudo osqueryi
+
+Important:
+Run osqueryi as root. The netcom process was running as root.
+
+STEP 6: Query the process socket table
+--------------------------------------
+SQL:
+SELECT pid, fd, socket, local_address, remote_address, remote_port
+FROM process_open_sockets
+WHERE pid = 1934;
+
+Explanation:
+pid            -> Process ID.
+fd             -> File descriptor used by the process.
+socket         -> Socket identifier.
+local_address  -> Local endpoint IP address.
+remote_address -> Remote endpoint IP address.
+remote_port    -> Remote destination port.
+
+Actual output previously observed for the columns without remote_port:
+PID:            1934
+Local address:  10.49.154.40
+Remote address: 68.53.23.246
+
+Room answer for remote IP:
+68.53.23.246
+
+Room answer for remote port:
+443
+
+Note:
+The user's pasted query did not include remote_port, so 443 was not shown
+in that pasted output. The room answer is 443. To display it on the VM,
+run the full SQL query above while netcom is still running.
+
+To exit osquery:
+Press Ctrl+D.
+
+
+TASK 5: PERSISTENCE
+===================
+
+Persistence means maintaining access to a system after initial access.
+This room demonstrates account, cron and service persistence.
+
+ACTIVITY 1: ACCOUNT CREATION DEMONSTRATION
+------------------------------------------
+
+STEP 1: Create the lab account
+------------------------------
+Command:
+sudo useradd attacker -G sudo
+
+STEP 2: Set a password for the lab account
+------------------------------------------
+Command:
+sudo passwd attacker
+
+Enter a lab-only password when prompted, then confirm it.
+
+STEP 3: Add the sudoers rule shown in the room
+----------------------------------------------
+Command:
+echo "attacker ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers
+
+Warning:
+These commands modify the lab machine's users and sudo configuration.
+Run them only in the disposable TryHackMe lab. Do not copy them to a
+production system.
+
+STEP 4: Review account-creation logs
+------------------------------------
+Command:
+sudo grep 'useradd' /var/log/auth.log
+
+STEP 5: Check the passwd database entry
+---------------------------------------
+Command:
+grep '^attacker:' /etc/passwd
+
+Relevant account fields:
+Username : attacker
+UID      : User ID
+GID      : Primary group ID
+Home     : User's home directory
+Shell    : Login shell
+
+
+ACTIVITY 2: CRON JOB PERSISTENCE
+--------------------------------
+
+Cron is a time-based scheduler. A cron entry can run a command at a
+specified time or at reboot.
+
+STEP 1: List the current user's cron entries
+--------------------------------------------
+Command:
+crontab -l
+
+STEP 2: Open the crontab editor (only if following the lab demonstration)
+--------------------------------------------------------------------------
+Command:
+crontab -e
+
+Example entry shown in the room:
+@reboot /path/to/malicious/script.sh
+
+Explanation:
+@reboot -> Runs the specified command when the system boots.
+
+Note:
+/path/to/malicious/script.sh is a placeholder in the room example. Do not
+add a non-existent or unwanted script as a real cron entry.
+
+STEP 3: Inspect per-user cron files
+-----------------------------------
+Command:
+sudo ls -la /var/spool/cron/crontabs/
+
+
+ACTIVITY 3: SYSTEMD SERVICE PERSISTENCE DEMONSTRATION
+-----------------------------------------------------
+
+The room demonstrates creating a service named suspicious.service.
+This is separate from the pre-existing benign.service used in the
+room's service-investigation questions.
+
+STEP 1: Create the demonstration service file
+---------------------------------------------
+Command:
+sudo tee /etc/systemd/system/suspicious.service > /dev/null <<'UNITFILE'
+[Unit]
+Description=Suspicious_Service
+After=network.target
+
+[Service]
+ExecStart=/home/activities/processes/suspicious
+Restart=on-failure
+User=nobody
+Group=nogroup
+
+[Install]
+WantedBy=multi-user.target
+UNITFILE
+
+STEP 2: Reload systemd configuration
+------------------------------------
+Command:
+sudo systemctl daemon-reload
+
+STEP 3: Enable the service at startup
+------------------------------------
+Command:
+sudo systemctl enable suspicious.service
+
+STEP 4: Start the service
+-------------------------
+Command:
+sudo systemctl start suspicious.service
+
+STEP 5: Check service status
+----------------------------
+Command:
+sudo systemctl status suspicious.service --no-pager
+
+STEP 6: Review service-related syslog messages
+-----------------------------------------------
+Command:
+sudo grep -i suspicious /var/log/syslog
+
+STEP 7: Review the demonstration service journal
+-------------------------------------------------
+Command:
+sudo journalctl -u suspicious.service --no-pager
+
+Note:
+These steps create the demonstration service from the room. They do not
+change the answer to the room's pre-existing-service questions below.
+
+
+ACTIVITY 4: INVESTIGATE THE PRE-EXISTING SERVICE
+-----------------------------------------------
+
+STEP 1: Review the systemd service directory
+--------------------------------------------
+Command:
+sudo ls -la /etc/systemd/system/
+
+TryHackMe answer for the service-directory question:
+/etc/systemd/system
+
+STEP 2: Inspect the pre-existing service
+----------------------------------------
+Command:
+sudo systemctl cat benign.service
+
+Alternative:
+sudo cat /etc/systemd/system/benign.service
+
+STEP 3: Identify the executable
+-------------------------------
+Command:
+sudo grep -n '^ExecStart=' /etc/systemd/system/benign.service
+
+The ExecStart directive identifies the program launched by the service.
+Room answer for the process:
+benign
+
+STEP 4: Review the service journal
+----------------------------------
+Command:
+sudo journalctl -u benign.service --no-pager
+
+To count journal records as JSON lines:
+sudo journalctl -u benign.service --no-pager -o json | wc -l
+
+Room answer for the number of journal entries before it was stopped:
+7
+
+TASK 5 ANSWERS
+---------------
+Q1. Default service directory asked for in this room:
+    /etc/systemd/system
+
+Q2. Pre-existing suspicious service:
+    benign.service
+
+Q3. Process referenced by the service:
+    benign
+
+Q4. Journal entries before the service stopped on 11 September:
+    7
+
+Important distinction:
+- suspicious.service is the service created during the demonstration.
+- benign.service is the pre-existing service identified by the room's
+  investigation questions.
+
+
+TASK 6: FOOTPRINTS ON DISK
+==========================
+
+Objective:
+Create a Debian package in the lab and investigate dpkg.log.
+
+ACTIVITY 1: CREATE THE SUSPICIOUS DEBIAN PACKAGE
+------------------------------------------------
+
+STEP 1: Become root
+-------------------
+Command:
+sudo su
+
+STEP 2: Create the package directory
+------------------------------------
+Command:
+mkdir -p /root/malicious-package/DEBIAN
+
+Explanation:
+mkdir -p -> Creates the parent and child directories if they do not exist.
+
+STEP 3: Create the control file
+-------------------------------
+Command:
+cat > /root/malicious-package/DEBIAN/control <<'CONTROLFILE'
+Package: malicious-package
+Version: 1.0
+Section: base
+Priority: optional
+Architecture: all
+Maintainer: attacker@test.com
+Description: This is a malicious Package
+CONTROLFILE
+
+STEP 4: Verify the control file
+--------------------------------
+Command:
+cat /root/malicious-package/DEBIAN/control
+
+STEP 5: Create the post-installation script
+-------------------------------------------
+Command:
+cat > /root/malicious-package/DEBIAN/postinst <<'POSTINSTALL'
+#!/bin/bash
+
+# Malicious post-installation script
+# It will run this script after installation
+
+echo "something suspicious"
+POSTINSTALL
+
+STEP 6: Make postinst executable
+--------------------------------
+Command:
+chmod 755 /root/malicious-package/DEBIAN/postinst
+
+Explanation:
+chmod -> Changes file permissions.
+755   -> Owner can read/write/execute; group and others can read/execute.
+
+Important:
+Create postinst before running chmod. If the file does not exist, chmod
+will return: No such file or directory.
+
+STEP 7: Verify package contents
+--------------------------------
+Command:
+ls -l /root/malicious-package/DEBIAN/
+
+Expected files:
+control
+postinst
+
+STEP 8: Build the Debian package
+--------------------------------
+Commands:
+cd /root
+dpkg-deb --build malicious-package
+
+Actual output observed in this lab:
+dpkg-deb: building package 'malicious-package' in 'malicious-package.deb'.
+
+STEP 9: Install the package
+---------------------------
+Command:
+dpkg -i /root/malicious-package.deb
+
+Expected output includes a package setup line for malicious-package.
+
+STEP 10: Verify installation
+----------------------------
+Command:
+dpkg -l | grep malicious-package
+
+The installed package status should begin with ii.
+
+
+ACTIVITY 2: INVESTIGATE DPKG LOGS
+---------------------------------
+
+STEP 1: Find package-related log entries
+----------------------------------------
+Command:
+grep -F 'malicious-package' /var/log/dpkg.log
+
+STEP 2: Count package-related log entries
+-----------------------------------------
+Command:
+grep -Fc 'malicious-package' /var/log/dpkg.log
+
+Room answer:
+6
+
+Note:
+Install the package only once before counting. Reinstalling it may create
+additional log entries and change the count.
+
+STEP 3: Find packages installed on 17 September 2024
+----------------------------------------------------
+Command:
+grep '^2024-09-17' /var/log/dpkg.log | grep ' install '
+
+Room answer:
+c2comm
+
+TASK 6 ANSWERS
+---------------
+Q1. Number of dpkg.log entries associated with the demonstration package:
+    6
+
+Q2. Package installed on 17 September 2024:
+    c2comm
+
+
+TASK 7: LINUX LOGS
+==================
+
+Objective:
+Examine SSH authentication activity in the historical auth.log files.
+
+STEP 1: Move to /var/log
+------------------------
+Command:
+cd /var/log
+
+STEP 2: List authentication log files
+-------------------------------------
+Command:
+ls -lh auth.log*
+
+Actual files observed in this lab:
+auth.log
+auth.log.1
+auth.log.2.gz
+
+Explanation:
+auth.log      -> Current authentication log.
+auth.log.1    -> Rotated, uncompressed authentication log.
+auth.log.2.gz -> Older, compressed authentication log.
+
+STEP 3: Search SSH entries for 11 September
+-------------------------------------------
+Command:
+grep -i sshd /var/log/auth.log.1 | grep 'Sep 11'
+
+Relevant actual log entry from this lab:
+Sep 11 22:05:04 tryhackme sshd[53409]: Invalid user saqib from 10.11.75.247 port 58647
+
+STEP 4: Search specifically for invalid SSH usernames
+-----------------------------------------------------
+Command:
+grep -E 'Sep 11.*Invalid user' /var/log/auth.log.1
+
+Evidence:
+Invalid user saqib from 10.11.75.247 port 58647
+
+Interpretation:
+Username    -> saqib
+Source IP   -> 10.11.75.247
+Source port -> 58647
+
+TASK 7 ANSWERS
+---------------
+Q1. Which user attempted to connect with SSH on 11 September 2024?
+    saqib
+
+Q2. From which IP was this failed SSH connection attempt made?
+    10.11.75.247
+
+Important:
+The log says "Invalid user", not "Failed password". Therefore this
+command returns no result for this specific event:
+
+grep -i 'Failed password' /var/log/auth.log.1
+
+The user's own auth.log.1 output contains the evidence above. Searching
+for Sep 11 in auth.log.2.gz returned no matching event; the evidence was
+in auth.log.1.
+
+
+TASK 8: CONCLUSION
+==================
+
+Read the conclusion and click the room completion button.
+
+Answer:
+Complete the room.
+
+
+FINAL ANSWER SHEET
+==================
+
+Task 1: Introduction
+Answer: Continue to the next task.
+
+Task 2: Lab Connection
+Q1. Number of files and folders:
+Answer: 3
+
+Task 3: Linux Incident Surface - Overview
+Answer: Continue to the next task.
+
+Task 4: Processes and Network Communication
+Q1. Remote IP of netcom:
+Answer: 68.53.23.246
+
+Q2. Remote port of netcom:
+Answer: 443
+
+Task 5: Persistence
+Q1. Default service directory:
+Answer: /etc/systemd/system
+
+Q2. Pre-existing suspicious service:
+Answer: benign.service
+
+Q3. Process referenced by the service:
+Answer: benign
+
+Q4. Journal entries before the service stopped:
+Answer: 7
+
+Task 6: Footprints on Disk
+Q1. Number of dpkg.log entries for the demonstration package:
+Answer: 6
+
+Q2. Package installed on 17 September 2024:
+Answer: c2comm
+
+Task 7: Linux Logs
+Q1. Username in the SSH invalid-user event:
+Answer: saqib
+
+Q2. Source IP address:
+Answer: 10.11.75.247
+
+Task 8: Conclusion
+Answer: Complete the room.
+
+
+QUICK COMMAND REFERENCE
+=======================
+
+cd                         -> Change working directory.
+ls -la                     -> List directory entries, including hidden ones.
+find                       -> Search for filesystem entries.
+ps aux                     -> Display running processes.
+lsof -p PID                -> List open files for a process.
+lsof -i -P -n              -> Display numeric network connections.
+osqueryi                   -> Open the osquery interactive shell.
+process_open_sockets       -> osquery table containing process socket data.
+systemctl cat SERVICE      -> Display a systemd service unit.
+journalctl -u SERVICE      -> Display a service's journal entries.
+dpkg-deb --build DIR       -> Build a Debian package.
+dpkg -i PACKAGE.deb        -> Install a Debian package.
+/var/log/dpkg.log          -> Debian package manager activity log.
+/var/log/auth.log          -> Authentication activity log.
+grep                       -> Search text in files.
+zgrep                      -> Search text in gzip-compressed files.
+
+
+EVIDENCE NOTES
+==============
+
+Directly confirmed from the user's terminal output:
+- /home/activities/processes contains 3 entries.
+- simple was running as root with PID 1783 during that session.
+- netcom was running as root with PID 1934 during that session.
+- netcom remote IP was 68.53.23.246.
+- Local endpoint shown by osquery was 10.49.154.40.
+- auth.log.1 recorded invalid user saqib from 10.11.75.247.
+- The Debian package build completed successfully.
+
+Room answers corroborated by the room page and published walkthroughs:
+- netcom remote port: 443.
+- Persistence answers: /etc/systemd/system, benign.service, benign, 7.
+- Footprints on Disk answers: 6, c2comm.
+
+Not shown in the user's pasted terminal output:
+- The updated osquery result containing the remote_port column.
+- The dpkg -i installation output and the user's dpkg.log count.
+- The benign.service file and journal output.
+
+Use the commands in the relevant sections to confirm those values on the
+running lab machine.
+
+END OF WALKTHROUGH
+==================

