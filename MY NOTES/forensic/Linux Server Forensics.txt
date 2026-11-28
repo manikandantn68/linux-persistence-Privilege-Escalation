@@ -1,0 +1,152 @@
+
+Task 2
+
+1
+-
+cd /var/log/apache2
+ls -lh
+
+2
+-
+cat access.log.1 | grep "nmap"
+cat access.log.1 | grep "Nmap"
+cat access.log.1 | grep "DirBuster"
+
+ans: 2
+
+3
+_
+
+cat access.log.1 | grep "Nmap"
+ans: /nmaplowercheck1618912425
+
+
+task 3
+
+1
+-
+grep -rinE 'type=.file|multipart/form-data' /var/www/html/
+
+-r → recursive into subdirectories
+-i → case-insensitive
+-n → show line numbers
+-E → extended regex (so | works)
+
+ans: contact.php
+
+2
+-
+
+cd /var/log/apache2
+grep '"POST ' access.log.1
+
+ans: 192.168.56.24
+
+3
+-
+cat /var/www/html/resources/development/2021/docs/SECURITY.md
+ans: freds
+
+task 4
+
+sudo cat /etc/crontab
+ans:sh -I
+
+task 5
+grep '^root2:' /etc/passwd
+
+root2 : WVLY0mgH0RtUI : 0 : 0 : root : /root : /bin/bash
+  |           |         |   |     |      |       |
+ Username    Hash      UID GID  Comment Home   Shell
+
+grep '^root2:' /etc/passwd | cut -d ':' -f2 > /tmp/root2.hash
+or
+echo 'WVLY0mgH0RtUI' > root2.hash
+
+
+john /tmp/root2.hash
+john --show /tmp/root2.hash
+
+ans : mrcake
+
+task 6: new vm on lab machine
+
+
+task 7: 
+1
+-
+cut -d '"' -f2 access.log | sort -u
+
+Non-standard -> GXWR  
+ans:GXWR  
+
+
+2
+-
+
+grep -a 'GXWR' /var/log/apache2/access.log.1
+
+ [20/Apr/2021:13:30:15 +0000]
+
+
+ans:13:30:15 
+
+task 8:
+1
+-
+sudo su
+
+enter passwd: FredRules!
+
+whoami
+cd /root/.ssh
+ls -la
+
+
+awk '{print $NF}' authorized_keys
+
+$NF = value of the field whose index is NF
+NF = Number of Fields on the current line
+$NF = the last field, whatever its position is (it's dynamic per line)
+
+ans: kali@kali
+
+
+task 9
+
+sudo su
+cd /root
+ls -la
+Read the first command
+head -n 1 /root/.bash_history
+
+ans:nano /etc/passwd
+
+
+task 10 : switch new vm
+
+task 11
+List active systemd services
+
+systemctl --type=service --state=active
+
+
+IpManager.service -> Why? IpManager is the suspicious service identified by the room's hint.
+
+Investigate IpManager -> systemctl status IpManager.service
+
+Loaded: loaded (/var/lib/network/IpManager.service; enabled)
+Active: active (running)
+Main PID: 1462 (bash)
+
+CGroup:
+  ├─1462 /bin/bash /etc/network/ZGtsam5hZG1ua2Fu.sh
+  └─1485 sleep 10
+
+sudo cat /etc/network/ZGtsam5hZG1ua2Fu.sh
+
+sudo cat /etc/network/ZGtsam5hZG1ua2Fu.sh | head -n 2
+
+ans: [gh0st_1n_the_machine]
+
+
